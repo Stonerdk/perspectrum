@@ -1,0 +1,165 @@
+[
+    {
+      "level": 0,
+      "index": 0,
+      "text": "신데렐라는 계모와 새 언니들에게 착취당하며 힘들게 살아가고 있습니다.",
+      "imageUrl": "1-1.jpg",
+      "properties": "start",
+      "choices": [
+        {
+          "text": "힘든 일에도 희망을 품는다.",
+          "nextNodeLevel": 1,
+          "nextNodeIndex": 1
+        },
+        {
+          "text": "도움을 요청한다.",
+          "nextNodeLevel": 1,
+          "nextNodeIndex": 2
+        }
+      ]
+    },
+    {
+      "level": 1,
+      "index": 1,
+      "text": "신데렐라는 자신의 상황을 긍정적으로 바라보기로 합니다.",
+      "imageUrl": "hope.jpg",
+      "properties": "",
+      "choices": [
+        {
+          "text": "친구인 동물들에게 도움을 요청한다.",
+          "nextNodeLevel": 2,
+          "nextNodeIndex": 3
+        },
+        {
+          "text": "혼자 힘으로 버텨내기로 한다.",
+          "nextNodeLevel": 2,
+          "nextNodeIndex": 4
+        }
+      ]
+    },
+    {
+      "level": 1,
+      "index": 2,
+      "text": "신데렐라는 요정에게 소원을 빌어 도움을 받기로 합니다.",
+      "imageUrl": "fairy.jpg",
+      "properties": "",
+      "choices": [
+        {
+          "text": "무도회에 갈 준비를 한다.",
+          "nextNodeLevel": 2,
+          "nextNodeIndex": 5
+        },
+        {
+          "text": "요정에게 가족에 대한 복수를 부탁한다.",
+          "nextNodeLevel": 2,
+          "nextNodeIndex": 6
+        }
+      ]
+    },
+    {
+      "level": 2,
+      "index": 3,
+      "text": "동물 친구들이 신데렐라의 무도회 준비를 돕습니다.",
+      "imageUrl": "animals.jpg",
+      "properties": "",
+      "choices": [
+        {
+          "text": "무도회에 참석한다.",
+          "nextNodeLevel": 3,
+          "nextNodeIndex": 7
+        }
+      ]
+    },
+    {
+      "level": 2,
+      "index": 4,
+      "text": "신데렐라는 무도회에 갈 수 없지만 스스로 행복을 찾기로 결심합니다.",
+      "imageUrl": "alone.jpg",
+      "properties": "ending",
+      "choices": []
+    },
+    {
+      "level": 2,
+      "index": 5,
+      "text": "요정의 도움으로 아름다운 드레스를 입고 무도회에 참석할 준비를 합니다.",
+      "imageUrl": "ball_dress.jpg",
+      "properties": "",
+      "choices": [
+        {
+          "text": "무도회에 참석한다.",
+          "nextNodeLevel": 3,
+          "nextNodeIndex": 7
+        }
+      ]
+    },
+    {
+      "level": 2,
+      "index": 6,
+      "text": "요정이 신데렐라의 가족에게 가혹한 벌을 내립니다. 신데렐라는 이를 보고 놀랍니다.",
+      "imageUrl": "revenge.jpg",
+      "properties": "ending",
+      "choices": []
+    },
+    {
+      "level": 3,
+      "index": 7,
+      "text": "신데렐라는 무도회에서 왕자를 만나게 됩니다.",
+      "imageUrl": "prince.jpg",
+      "properties": "",
+      "choices": [
+        {
+          "text": "왕자와 함께 춤을 춘다.",
+          "nextNodeLevel": 4,
+          "nextNodeIndex": 8
+        },
+        {
+          "text": "무대에서 내려와 조용히 시간을 보낸다.",
+          "nextNodeLevel": 4,
+          "nextNodeIndex": 9
+        }
+      ]
+    },
+    {
+      "level": 4,
+      "index": 8,
+      "text": "왕자는 신데렐라에게 첫눈에 반합니다. 두 사람은 무도회 이후에도 서로를 생각하게 됩니다.",
+      "imageUrl": "dance.jpg",
+      "properties": "",
+      "choices": [
+        {
+          "text": "왕자의 청혼을 받아들인다.",
+          "nextNodeLevel": 5,
+          "nextNodeIndex": 10
+        },
+        {
+          "text": "자유를 위해 청혼을 거절한다.",
+          "nextNodeLevel": 5,
+          "nextNodeIndex": 11
+        }
+      ]
+    },
+    {
+      "level": 4,
+      "index": 9,
+      "text": "신데렐라는 무도회장에서 벗어나 한적한 곳에서 혼자 생각에 잠깁니다.",
+      "imageUrl": "alone_thoughts.jpg",
+      "properties": "ending",
+      "choices": []
+    },
+    {
+      "level": 5,
+      "index": 10,
+      "text": "신데렐라는 왕자와 결혼하여 행복하게 살게 됩니다.",
+      "imageUrl": "wedding.jpg",
+      "properties": "ending",
+      "choices": []
+    },
+    {
+      "level": 5,
+      "index": 11,
+      "text": "신데렐라는 왕자의 청혼을 거절하고 자유로운 삶을 선택합니다.",
+      "imageUrl": "freedom.jpg",
+      "properties": "ending",
+      "choices": []
+    }
+  ]
