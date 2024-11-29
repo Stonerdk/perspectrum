@@ -1,0 +1,20 @@
+[
+    {
+        "id": "0",
+        "participants": ["1", "2"],
+        "messages": [
+            { "sender": "0", "message": "안녕하세요, 여러분!", "timestamp": "2024-01-01T10:00:00Z" },
+            { "sender": "1", "message": "안녕하세요, 무엇을 도와드릴까요?", "timestamp": "2024-01-01T10:01:00Z" },
+            { "sender": "0", "message": "프로젝트에 대해 논의하고 싶어요.", "timestamp": "2024-01-01T10:02:00Z" },
+            { "sender": "2", "message": "좋아요, 시작해볼까요?", "timestamp": "2024-01-01T10:03:00Z" }
+        ]
+    },
+    {
+        "id": "1",
+        "participants": ["2", "3", "4", "5"],
+        "messages": [
+            { "sender": "0", "message": "프로젝트 진행 상황은 어때요?", "timestamp": "2024-01-02T11:00:00Z" },
+            { "sender": "3", "message": "順調に進んでいます。", "timestamp": "2024-01-02T11:01:00Z" }
+        ]
+    }
+]

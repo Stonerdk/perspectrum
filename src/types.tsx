@@ -1,13 +1,23 @@
-export interface Choice {
-    text: string;
-    nextNodeLevel: number;
-    nextNodeIndex: number;
+export interface ChatMessage {
+    sender: string;
+    message: string;
+    timestamp: string;
 }
 
-export interface StoryNode {
-    level: number;
-    index: number;
-    text: string;
-    imageUrl?: string;
-    choices?: Choice[];
+export interface ChatRoom {
+    id: string;
+    participants: string[];
+    messages: ChatMessage[];
 }
+
+export interface ChatRoomHeader {
+    id: string;
+    recentMessage: ChatMessage;
+}
+
+export interface Persona  {
+    id: string;
+    name: string;
+    role: string;
+    color: string;
+  };

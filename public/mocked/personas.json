@@ -1,0 +1,7 @@
+[
+    { "id": "1", "name": "Emily", "role": "LLM Architect", "color": "green" },
+    { "id": "2", "name": "Stone", "role": "System Engineer", "color": "orange" },
+    { "id": "3", "name": "Green", "role": "PO", "color": "purple" },
+    { "id": "4", "name": "Dilan", "role": "Designer", "color": "blue" },
+    { "id": "5", "name": "Jasmine", "role": "Athlete", "color": "red" }
+]
