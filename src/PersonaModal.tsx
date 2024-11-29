@@ -5,10 +5,8 @@ import { PersonaName, PersonaIcon } from "./Components";
 
 interface ModalProps {
   isOpen: boolean;
-  personas: Persona[];
-  participants: Persona[];
   onClose: () => void;
-  onSelect: (persona: Persona) => void;
+  onCreate: (persona: { name: string; role: string; file: File }) => void;
 }
 
 const ModalContainer = styled.div<{ $isOpen: boolean }>`
@@ -38,36 +36,30 @@ const ModalContent = styled.div`
   overflow-y: auto;
 `;
 
-const PersonaList = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  max-height: 400px;
-  overflow-y: auto;
-`;
-
-const PersonaItem = styled.div`
-  display: flex;
-  align-items: center;
+const Input = styled.input`
+  margin-bottom: 10px;
   padding: 10px;
-  background: #3a3a3a;
   border-radius: 5px;
-  gap: 10px;
+  border: none;
+`;
+
+const FileInput = styled.input`
+  margin-bottom: 10px;
+  padding: 10px;
+  border-radius: 5px;
+  border: none;
+  color: #fff;
+`;
+
+const ConfirmButton = styled.button`
+  background: #6c63ff;
+  color: #fff;
+  border: none;
+  padding: 10px;
+  border-radius: 5px;
   cursor: pointer;
-
-  &:hover {
-    background: #6c63ff;
-  }
-`;
-
-const PersonaDetails = styled.div`
-  display: flex;
-  flex-direction: column;
-`;
-
-const PersonaRole = styled.span`
-  color: #aaa;
-  font-size: 14px;
+  margin-top: 10px;
+  width: 100%;
 `;
 
 const CloseButton = styled.button`
@@ -81,45 +73,47 @@ const CloseButton = styled.button`
   width: 100%;
 `;
 
-const AddPersonaModal: React.FC<ModalProps> = ({ isOpen, personas, onClose, onSelect, participants }) => {
-  const [searchTerm, setSearchTerm] = useState("");
+const GeneratePersonaModal: React.FC<ModalProps> = ({ isOpen, onClose, onCreate }) => {
+  const [name, setName] = useState("");
+  const [role, setRole] = useState("");
+  const [file, setFile] = useState<File | null>(null);
 
-  const filteredPersonas = personas.filter(persona =>
-    persona.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    persona.role.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const isParticipant = (persona: Persona) => participants.some(p => p.id === persona.id);
+  const handleCreate = () => {
+    if (name && role && file) {
+      onCreate({ name, role, file });
+      setName("");
+      setRole("");
+      setFile(null);
+      onClose();
+    }
+  };
 
   return (
     <ModalContainer $isOpen={isOpen}>
       <ModalContent>
-        <h2>Select Persona</h2>
-        <input
+        <h2>Create New Persona</h2>
+        <Input
           type="text"
-          placeholder="Search by name or role"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          placeholder="Name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
         />
-        <PersonaList>
-          {filteredPersonas.map((persona) => (
-            <PersonaItem
-              key={persona.id}
-              onClick={() => onSelect(persona)}
-              style={{ opacity: isParticipant(persona) ? 0.5 : 1 }}
-            >
-              <PersonaIcon style={{ backgroundColor: persona.color }} />
-              <PersonaDetails>
-                <PersonaName>{persona.name}</PersonaName>
-                <PersonaRole>{persona.role}</PersonaRole>
-              </PersonaDetails>
-            </PersonaItem>
-          ))}
-        </PersonaList>
+        <Input
+          type="text"
+          placeholder="Role"
+          value={role}
+          onChange={(e) => setRole(e.target.value)}
+        />
+        <FileInput
+          type="file"
+          accept="application/pdf"
+          onChange={(e) => setFile(e.target.files ? e.target.files[0] : null)}
+        />
+        <ConfirmButton onClick={handleCreate}>Create</ConfirmButton>
         <CloseButton onClick={onClose}>Close</CloseButton>
       </ModalContent>
     </ModalContainer>
   );
 };
 
-export default AddPersonaModal;
+export default GeneratePersonaModal;

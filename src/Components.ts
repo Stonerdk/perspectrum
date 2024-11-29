@@ -348,3 +348,20 @@ export const CancelButton = styled.button`
     background-color: #aaaaaa;
   }
 `;
+
+export const GenerateButton = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  background-color: #77bc44;
+  color: #fff;
+  border: none;
+  padding: 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  text-align: center;
+  &:hover {
+    background-color: #99de66;
+  }
+`;

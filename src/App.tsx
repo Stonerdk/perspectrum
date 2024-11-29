@@ -39,10 +39,12 @@ import {
   FHFlex,
   FVFlex,
   CancelButton,
+  GenerateButton,
 } from "./Components";
-import { FaPaperPlane, FaUserPlus } from "react-icons/fa";
+import { FaPaperPlane, FaPlus, FaUserPlus } from "react-icons/fa";
 
 import { Persona, ChatMessage, ChatRoomHeader, ChatRoom } from "./types";
+import GeneratePersonaModal from "./PersonaModal";
 
 interface SearchInputProps {
   value: string;
@@ -72,9 +74,9 @@ const App: React.FC = () => {
   // Loading/Styles
   const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState<boolean>(true);
   const [isRightSidebarOpen, setIsRightSidebarOpen] = useState<boolean>(true);
-
   const [loadingParticipants, setLoadingParticipants] =
     useState<boolean>(false);
+  const [isGeneratePersonaModalOpen, setGeneratePersonaModalOpen] = useState<boolean>(false);
 
   // INPUT
   const [messageInput, setMessageInput] = useState<string>("");
@@ -174,6 +176,7 @@ const App: React.FC = () => {
                   ))}
                 </PersonasList>
                 <FVFlex>
+
                   {/* <SearchInputMemo
                     value={searchInput}
                     onChange={handleSearchChange}
@@ -186,6 +189,12 @@ const App: React.FC = () => {
                       Cancel
                     </CancelButton>
                   </FHFlex>
+                  <hr style={{width:"100%", background: "#555", height: "1px", border: "0" }} />
+                    <GenerateButton style={{ alignSelf: "center" }} onClick={() => {
+                      setGeneratePersonaModalOpen(true);
+                    }}>
+                    <FaPlus /> &nbsp; Generate New Persona
+                    </GenerateButton>
                 </FVFlex>
               </RightSidebarBody>
             ) : (
@@ -280,6 +289,10 @@ const App: React.FC = () => {
           <RightSidebar />
         </MainContent>
       </AppContainer>
+      <GeneratePersonaModal
+        isOpen={isGeneratePersonaModalOpen}
+        onClose={() => {setGeneratePersonaModalOpen(false)}}
+        onCreate={() => {}} />
     </Background>
   );
 };
