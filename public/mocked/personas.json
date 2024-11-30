@@ -1,7 +1,92 @@
 [
-    { "id": "1", "name": "Emily", "role": "LLM Architect", "color": "green" },
-    { "id": "2", "name": "Stone", "role": "System Engineer", "color": "orange" },
-    { "id": "3", "name": "Green", "role": "PO", "color": "purple" },
-    { "id": "4", "name": "Dilan", "role": "Designer", "color": "blue" },
-    { "id": "5", "name": "Jasmine", "role": "Athlete", "color": "red" }
-]
+    {
+      "id": "1",
+      "name": "Emily",
+      "role": "LLM Architect",
+      "color": "green",
+      "avatar": {
+        "accessoriesType": "Prescription01",
+        "backgroundColor": "PastelGreen",
+        "clotheColor": "Blue02",
+        "clotheType": "Hoodie",
+        "eyeType": "Default",
+        "eyebrowType": "UpDown",
+        "hairColor": "Platinum",
+        "mouthType": "Twinkle",
+        "skinColor": "Brown",
+        "topType": "LongHairCurly"
+      }
+    },
+    {
+      "id": "2",
+      "name": "Stone",
+      "role": "System Engineer",
+      "color": "orange",
+      "avatar": {
+        "accessoriesType": "Prescription01",
+        "backgroundColor": "PastelYellow",
+        "clotheColor": "PastelBlue",
+        "clotheType": "Hoodie",
+        "eyeType": "Surprised",
+        "eyebrowType": "Default",
+        "hairColor": "Auburn",
+        "mouthType": "Default",
+        "skinColor": "DarkBrown",
+        "topType": "NoHair"
+      }
+    },
+    {
+      "id": "3",
+      "name": "Green",
+      "role": "PO",
+      "color": "purple",
+      "avatar": {
+        "accessoriesType": "Blank",
+        "backgroundColor": "PastelBlue",
+        "clotheColor": "Gray02",
+        "clotheType": "BlazerShirt",
+        "eyeType": "Surprised",
+        "eyebrowType": "DefaultNatural",
+        "hairColor": "Auburn",
+        "mouthType": "Twinkle",
+        "skinColor": "Pale",
+        "topType": "ShortHairFrizzle"
+      }
+    },
+    {
+      "id": "4",
+      "name": "Dilan",
+      "role": "Designer",
+      "color": "blue",
+      "avatar": {
+        "accessoriesType": "Round",
+        "backgroundColor": "PastelBlue",
+        "clotheColor": "Black",
+        "clotheType": "ShirtScoopNeck",
+        "eyeType": "Surprised",
+        "eyebrowType": "SadConcerned",
+        "hairColor": "Auburn",
+        "mouthType": "Serious",
+        "skinColor": "Tanned",
+        "topType": "ShortHairDreads01"
+      }
+    },
+    {
+      "id": "5",
+      "name": "Jasmine",
+      "role": "Athlete",
+      "color": "red",
+      "avatar": {
+        "accessoriesType": "Wayfarers",
+        "backgroundColor": "PastelBlue",
+        "clotheColor": "White",
+        "clotheType": "Hoodie",
+        "eyeType": "Wink",
+        "eyebrowType": "Default",
+        "hairColor": "Black",
+        "mouthType": "Serious",
+        "skinColor": "DarkBrown",
+        "topType": "LongHairCurly"
+      }
+    }
+  ]
