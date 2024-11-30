@@ -5,6 +5,9 @@ import {
   getPersonaById,
   fetchMockedPersonas,
   addChat,
+  addPersona,
+  modifyParticipants,
+  addChatRoom,
 } from "./apiMock";
 import {
   Background,
@@ -40,18 +43,30 @@ import {
   FVFlex,
   CancelButton,
   GenerateButton,
+  ToggleButton,
 } from "./Components";
 import { FaPaperPlane, FaPlus, FaUserPlus } from "react-icons/fa";
 
-import { Persona, ChatMessage, ChatRoomHeader, ChatRoom } from "./types";
+import {
+  Persona,
+  ChatMessage,
+  ChatRoomHeader,
+  ChatRoom,
+  AvatarType,
+} from "./types";
 import GeneratePersonaModal from "./PersonaModal";
+import Avatar from "avataaars";
+import { BiSolidMessageAdd } from "react-icons/bi";
 
 interface SearchInputProps {
   value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
-const SearchInputComponent: React.FC<SearchInputProps> = ({ value, onChange }) => {
+const SearchInputComponent: React.FC<SearchInputProps> = ({
+  value,
+  onChange,
+}) => {
   return (
     <SearchInput
       type="text"
@@ -70,13 +85,18 @@ const App: React.FC = () => {
   const [currentChatRoom, setCurrentChatRoom] = useState<ChatRoom | null>(null);
   const [participants, setParticipants] = useState<Persona[]>([]);
   const [allPersonas, setAllPersonas] = useState<Persona[]>([]);
+  const [filteredPersonas, setFilteredPersonas] = useState<Persona[]>([]);
+  const [toggledPersonas, setToggledPersonas] = useState<Set<string>>(
+    new Set()
+  );
 
   // Loading/Styles
   const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState<boolean>(true);
   const [isRightSidebarOpen, setIsRightSidebarOpen] = useState<boolean>(true);
   const [loadingParticipants, setLoadingParticipants] =
     useState<boolean>(false);
-  const [isGeneratePersonaModalOpen, setGeneratePersonaModalOpen] = useState<boolean>(false);
+  const [isGeneratePersonaModalOpen, setGeneratePersonaModalOpen] =
+    useState<boolean>(false);
 
   // INPUT
   const [messageInput, setMessageInput] = useState<string>("");
@@ -98,16 +118,18 @@ const App: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchMockedPersonas().then(setAllPersonas);
-  }, []);
-
-  useEffect(() => {
-    fetchMockedChatRoomHeaders().then((headers: ChatRoomHeader[]) => {
+    const fetchInitialData = async () => {
+      const [personas, headers] = await Promise.all([
+        fetchMockedPersonas(),
+        fetchMockedChatRoomHeaders(),
+      ]);
+      setAllPersonas(personas);
       setChatRoomHeaders(headers);
       if (headers.length > 0) {
-        selectChatRoom(headers[0].id);
+        selectChatRoom(headers[0].id, personas);
       }
-    });
+    };
+    fetchInitialData();
   }, []);
 
   const togglePersonaParticipation = (id: string) => {
@@ -126,32 +148,61 @@ const App: React.FC = () => {
     const updatedParticipants = allPersonas.filter((persona) =>
       selectedPersonas.has(persona.id)
     );
-    setParticipants(updatedParticipants);
-    setIsAddingPersonas(false); // Exit persona adding mode
-  };
-
-  const filteredPersonas = allPersonas.filter((persona) =>
-    persona.name.toLowerCase().includes(searchInput.toLowerCase())
-  );
-
-  const selectChatRoom = (id: string) => {
-    setLoadingParticipants(true);
-    fetchMockedChatRoom(id).then((chatroom) => {
-      setCurrentChatRoom(chatroom);
-      const promises = chatroom.participants.map((id) => getPersonaById(id));
-      Promise.all(promises).then((personas) => {
-        setParticipants(personas.filter((p) => p !== undefined) as Persona[]);
-        setSelectedPersonas(new Set(chatroom.participants));
-        setLoadingParticipants(false);
+    modifyParticipants(
+      currentChatRoom!.id,
+      updatedParticipants.map((p) => p.id)
+    ).then(() => {
+      setParticipants(updatedParticipants);
+      setIsAddingPersonas(false); // Exit persona adding mode
+      setToggledPersonas((prev) => {
+        const updatedSet = new Set(prev);
+        updatedParticipants.forEach((p) => updatedSet.delete(p.id));
+        return updatedSet;
       });
     });
   };
 
+  useEffect(() => {
+    setFilteredPersonas(
+      allPersonas.filter((persona) =>
+        persona.name.toLowerCase().includes(searchInput.toLowerCase())
+      )
+    );
+  }, [searchInput]);
+
+  const selectChatRoom = async (id: string, personas?: Persona[]) => {
+    setLoadingParticipants(true);
+    const chatroom = await fetchMockedChatRoom(id);
+    setCurrentChatRoom(chatroom);
+    const participantIds = chatroom.participants;
+    const participantsData = personas || allPersonas;
+    const participants = participantIds
+      .map((id) => participantsData.find((p) => p.id === id))
+      .filter((p) => p !== undefined) as Persona[];
+    setParticipants(participants);
+    setSelectedPersonas(new Set(participantIds));
+    setLoadingParticipants(false);
+  };
+
+  const handleToggle = (id: string) => {
+    setToggledPersonas((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id); // 토글 해제
+      } else {
+        newSet.add(id); // 토글 활성화
+      }
+      return newSet;
+    });
+  };
 
   const RightSidebar = () => {
-    const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-      setSearchInput(e.target.value);
-    }, [])
+    const handleSearchChange = useCallback(
+      (e: React.ChangeEvent<HTMLInputElement>) => {
+        setSearchInput(e.target.value);
+      },
+      []
+    );
     return (
       <Sidebar $isOpen={isRightSidebarOpen} $position="right">
         {loadingParticipants ? (
@@ -167,16 +218,27 @@ const App: React.FC = () => {
                       onClick={() => togglePersonaParticipation(persona.id)}
                       $isSelected={selectedPersonas.has(persona.id)}
                     >
-                      <PersonaIcon style={{ backgroundColor: persona.color }} />
-                      <PersonaDetails>
-                        <PersonaName>{persona.name}</PersonaName>
-                        <PersonaRole>{persona.role}</PersonaRole>
-                      </PersonaDetails>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "10px",
+                        }}
+                      >
+                        <Avatar
+                          style={{ width: "40px", height: "40px" }}
+                          avatarStyle="Circle"
+                          {...persona.avatar}
+                        />
+                        <PersonaDetails>
+                          <PersonaName>{persona.name}</PersonaName>
+                          <PersonaRole>{persona.role}</PersonaRole>
+                        </PersonaDetails>
+                      </div>
                     </PersonaWrapper>
                   ))}
                 </PersonasList>
                 <FVFlex>
-
                   {/* <SearchInputMemo
                     value={searchInput}
                     onChange={handleSearchChange}
@@ -189,30 +251,68 @@ const App: React.FC = () => {
                       Cancel
                     </CancelButton>
                   </FHFlex>
-                  <hr style={{width:"100%", background: "#555", height: "1px", border: "0" }} />
-                    <GenerateButton style={{ alignSelf: "center" }} onClick={() => {
-                      setGeneratePersonaModalOpen(true);
-                    }}>
+                  <hr
+                    style={{
+                      width: "100%",
+                      background: "#555",
+                      height: "1px",
+                      border: "0",
+                    }}
+                  />
+                  <GenerateButton
+                    style={{ alignSelf: "center" }}
+                    onClick={() => setGeneratePersonaModalOpen(true)}
+                  >
                     <FaPlus /> &nbsp; Generate New Persona
-                    </GenerateButton>
+                  </GenerateButton>
                 </FVFlex>
               </RightSidebarBody>
             ) : (
               <RightSidebarBody>
                 <PersonasList>
                   {participants.map((persona) => (
-                    <PersonaWrapper key={persona.id}>
-                      <PersonaIcon style={{ backgroundColor: persona.color }} />
-                      <PersonaDetails>
-                        <PersonaName>{persona.name}</PersonaName>
-                        <PersonaRole>{persona.role}</PersonaRole>
-                      </PersonaDetails>
+                    <PersonaWrapper
+                      key={persona.id}
+                      onClick={() => handleToggle(persona.id)}
+                      $isSelected={toggledPersonas.has(persona.id)}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "10px",
+                        }}
+                      >
+                        <Avatar
+                          style={{ width: "40px", height: "40px", gap: "10px" }}
+                          avatarStyle="Circle"
+                          {...persona.avatar}
+                        />
+                        <PersonaDetails>
+                          <PersonaName>{persona.name}</PersonaName>
+                          <PersonaRole>{persona.role}</PersonaRole>
+                        </PersonaDetails>
+                      </div>
+                      {/* 토글 버튼 */}
+                      <ToggleButton
+                        $isSelected={toggledPersonas.has(persona.id)}
+                      >
+                        @
+                      </ToggleButton>
                     </PersonaWrapper>
                   ))}
                 </PersonasList>
-                <NewPersonaButton onClick={() => setIsAddingPersonas(true)}>
-                  <FaUserPlus />
-                </NewPersonaButton>
+                <div
+                  style={{
+                    width: "100%",
+                    display: "flex",
+                    justifyContent: "right",
+                  }}
+                >
+                  <NewPersonaButton onClick={() => setIsAddingPersonas(true)}>
+                    <FaUserPlus />
+                  </NewPersonaButton>
+                </div>
               </RightSidebarBody>
             )}
           </>
@@ -232,15 +332,40 @@ const App: React.FC = () => {
         <MainContent>
           {/* Left Sidebar */}
           <Sidebar $isOpen={isLeftSidebarOpen} $position="left">
-            {chatRoomHeaders.map((header) => (
-              <ChatRoomHeaderItem
-                key={header.id}
-                onClick={() => selectChatRoom(header.id)}
-                $isSelected={currentChatRoom?.id === header.id}
+            <PersonasList>
+              {chatRoomHeaders.map((header) => (
+                <ChatRoomHeaderItem
+                  key={header.id}
+                  onClick={() => selectChatRoom(header.id)}
+                  $isSelected={currentChatRoom?.id === header.id}
+                >
+                  {header.recentMessage.message || "No recent message"}
+                </ChatRoomHeaderItem>
+              ))}
+            </PersonasList>
+            <div
+              style={{
+                width: "100%",
+                display: "flex",
+                justifyContent: "right",
+              }}
+            >
+              <NewPersonaButton
+                onClick={() => {
+                  addChatRoom().then((chatroom) => {
+                    fetchMockedChatRoomHeaders().then(
+                      (headers: ChatRoomHeader[]) => {
+                        setChatRoomHeaders(headers);
+                      }
+                    );
+                    selectChatRoom(chatroom.id);
+                    setGeneratePersonaModalOpen(false);
+                  });
+                }}
               >
-                {header.recentMessage.message || "No recent message"}
-              </ChatRoomHeaderItem>
-            ))}
+                <BiSolidMessageAdd />
+              </NewPersonaButton>
+            </div>
           </Sidebar>
 
           {/* Chat Area */}
@@ -255,8 +380,10 @@ const App: React.FC = () => {
                   return (
                     <MessageRow key={idx} $ismine={isMine}>
                       {!isMine && sender && (
-                        <MessageAvatar
-                          style={{ backgroundColor: sender.color }}
+                        <Avatar
+                          style={{ width: "40px", height: "40px" }}
+                          avatarStyle="Circle"
+                          {...sender.avatar}
                         />
                       )}
                       <MessageContent $ismine={isMine}>
@@ -291,8 +418,25 @@ const App: React.FC = () => {
       </AppContainer>
       <GeneratePersonaModal
         isOpen={isGeneratePersonaModalOpen}
-        onClose={() => {setGeneratePersonaModalOpen(false)}}
-        onCreate={() => {}} />
+        onClose={() => {
+          setGeneratePersonaModalOpen(false);
+        }}
+        onCreate={async (
+          name: string,
+          role: string,
+          avatar: AvatarType,
+          file: File
+        ) => {
+          await addPersona(name, role, avatar);
+          const personas = await fetchMockedPersonas();
+          setAllPersonas(personas);
+          setFilteredPersonas(
+            allPersonas.filter((persona) =>
+              persona.name.toLowerCase().includes(searchInput.toLowerCase())
+            )
+          );
+        }}
+      />
     </Background>
   );
 };

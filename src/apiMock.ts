@@ -1,11 +1,11 @@
-import { ChatRoom, Persona, ChatRoomHeader } from "./types";
+import { ChatRoom, Persona, ChatRoomHeader, AvatarType } from "./types";
 import __personas from '../public/mocked/personas.json';
 import __chatrooms from '../public/mocked/chatrooms.json';
 
 const personas: Persona[] = [...__personas];
 const chatrooms: ChatRoom[] = [...__chatrooms];
 
-export const fetchMockedPersonas = async () => {
+export const fetchMockedPersonas = async (): Promise<Persona[]> => {
     return new Promise((resolve) => {
       setTimeout(() => {
         resolve(personas);
@@ -41,14 +41,36 @@ export const fetchMockedChatRoomHeaders = async () : Promise<ChatRoomHeader[]> =
     }));
 }
 
-export const addChatRoom = async (chatRoom: ChatRoom): Promise<void> => {
+export const addChatRoom = async (): Promise<ChatRoom> => {
     await new Promise((resolve) => setTimeout(resolve, 1));
-    chatrooms.push(chatRoom);
+    const newChatRoom: ChatRoom = {
+        id: (chatrooms.length + 1).toString(),
+        participants: [],
+        messages: [],
+    };
+    chatrooms.push(newChatRoom);
+    return newChatRoom;
 };
 
-export const addPersona = async (persona: Persona): Promise<void> => {
+export const modifyParticipants = async (roomId: string, participants: string[]): Promise<void> => {
     await new Promise((resolve) => setTimeout(resolve, 1));
-    personas.push(persona);
+    const chatRoom = chatrooms.find((chatroom) => chatroom.id === roomId);
+    if (chatRoom) {
+        chatRoom.participants = participants;
+    }
+}
+
+export const addPersona = async (name: string, role: string, avatar: AvatarType): Promise<Persona> => {
+    await new Promise((resolve) => setTimeout(resolve, 1));
+    const newPersona: Persona = {
+        id: (personas.length + 1).toString(),
+        name,
+        role,
+        avatar,
+        color: "#fff",
+    };
+    personas.push(newPersona);
+    return newPersona;
 };
 
 export const addChat = async (roomId: string, sender: string, message: string): Promise<void> => {

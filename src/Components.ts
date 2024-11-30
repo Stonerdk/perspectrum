@@ -1,4 +1,4 @@
-import styled from "styled-components";
+import styled, { keyframes } from "styled-components";
 // 전체 화면 컨테이너
 
 export const FHFlex = styled.div`
@@ -78,6 +78,9 @@ export const Sidebar = styled.div<{
 }>`
   width: 250px;
   background-color: #242424;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
   position: relative;
   top: 0;
   bottom: 0;
@@ -163,6 +166,7 @@ export const PersonaWrapper = styled.div<{ $isSelected?: boolean }>`
   padding: 5px;
   margin: 5px;
   border-radius: 5px;
+  justify-content: space-between;
   background-color: ${({ $isSelected }) => ($isSelected ? "#6c63ff" : "#242424")};
   cursor: pointer;
   transition: background-color 0.3s ease;
@@ -195,12 +199,14 @@ export const NewPersonaButton = styled.button`
   background-color: #6c63ff;
   color: #fff;
   border: none;
-  border-radius: 5px;
+  border-radius: 20px;
   cursor: pointer;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 5px;
-  width: 100%;
+  width: 40px;
+  height: 40px;
 `;
 
 export const RightSidebarBody = styled.div`
@@ -312,6 +318,9 @@ export const SendButton = styled.button`
   width: 40px;
   height: 40px;
   cursor: pointer;
+  &:hover {
+      background-color: #5a54d1;
+  }
 `;
 
 export const SearchInput = styled.input`
@@ -364,4 +373,33 @@ export const GenerateButton = styled.button`
   &:hover {
     background-color: #99de66;
   }
+`;
+
+export const ToggleButton = styled.button<{ $isSelected: boolean }>`
+  background-color: transparent;
+  color: ${({ $isSelected }) => ($isSelected ? "#ffffff" : "#242424")};
+  border: 0px solid #aaa;
+  border-radius: 50%;
+  padding: 5px;
+  cursor: pointer;
+  font-size: 24px;
+`;
+
+const spin = keyframes`
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+`;
+
+export const Spinner = styled.div`
+  border: 4px solid rgba(0, 0, 0, 0.1); /* 바깥 원 */
+  border-left-color: #4a90e2; /* 회전하는 원 */
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: ${spin} 1s linear infinite;
+  margin: auto; /* 가운데 정렬 */
 `;
