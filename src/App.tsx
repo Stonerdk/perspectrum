@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import {
   fetchMockedChatRoomHeaders,
   fetchMockedChatRoom,
@@ -8,7 +8,8 @@ import {
   addPersona,
   modifyParticipants,
   addChatRoom,
-} from "./apiMock";
+  retrieveRecommendedPersona,
+} from "./api";
 import {
   Background,
   AppContainer,
@@ -46,6 +47,7 @@ import {
   ToggleButton,
 } from "./Components";
 import { FaPaperPlane, FaPlus, FaUserPlus } from "react-icons/fa";
+import ClipLoader from "react-spinners/ClipLoader";
 
 import {
   Persona,
@@ -100,6 +102,7 @@ const App: React.FC = () => {
 
   // INPUT
   const [messageInput, setMessageInput] = useState<string>("");
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
 
   // Invite
   const [searchInput, setSearchInput] = useState<string>("");
@@ -108,8 +111,58 @@ const App: React.FC = () => {
     new Set()
   );
 
+  const chatRoomRef = useRef<HTMLDivElement | null>(null);
+  const websocket = useRef<WebSocket | null>(null);
+
+  useEffect(() => {
+    if (currentChatRoom) {
+      setMessages(currentChatRoom.messages);
+      websocket.current = new WebSocket(
+        `ws://localhost:8000/ws/chatrooms/${currentChatRoom.id}`
+      );
+      websocket.current.onopen = () => {
+        console.log("WebSocket 연결 성공");
+      };
+
+      websocket.current.onmessage = (event) => {
+        const message: ChatMessage = JSON.parse(event.data);
+        setMessages((prevMessages) => {
+          const index = prevMessages.findIndex((msg) => msg.id === message.id);
+          if (index !== -1) {
+            const updatedMessages = [...prevMessages];
+            updatedMessages[index] = message;
+            return updatedMessages;
+          } else {
+            return [...prevMessages, message];
+          }
+        });
+      };
+
+      websocket.current.onclose = () => {
+        console.log("WebSocket 연결 종료");
+      };
+
+      return () => {
+        websocket.current?.close();
+      };
+    }
+  }, [currentChatRoom]);
+
+  useEffect(() => {
+    chatRoomRef.current?.scrollIntoView({ behavior: "smooth" });
+  });
+
   const sendMessage = async () => {
     if (!currentChatRoom || messageInput.trim() === "") return;
+
+    if (messages.length == 0 && participants.length == 0) {
+      const recommendedParticipants = await retrieveRecommendedPersona(
+        currentChatRoom.id,
+        messageInput
+      );
+      setParticipants(recommendedParticipants);
+    }
+
     await addChat(currentChatRoom.id, "0", messageInput);
     fetchMockedChatRoom(currentChatRoom.id).then((chatroom: ChatRoom) => {
       setCurrentChatRoom(chatroom);
@@ -124,6 +177,11 @@ const App: React.FC = () => {
         fetchMockedChatRoomHeaders(),
       ]);
       setAllPersonas(personas);
+      setFilteredPersonas(
+        personas.filter((persona) =>
+          persona.name.toLowerCase().includes(searchInput.toLowerCase())
+        )
+      );
       setChatRoomHeaders(headers);
       if (headers.length > 0) {
         selectChatRoom(headers[0].id, personas);
@@ -251,20 +309,6 @@ const App: React.FC = () => {
                       Cancel
                     </CancelButton>
                   </FHFlex>
-                  <hr
-                    style={{
-                      width: "100%",
-                      background: "#555",
-                      height: "1px",
-                      border: "0",
-                    }}
-                  />
-                  <GenerateButton
-                    style={{ alignSelf: "center" }}
-                    onClick={() => setGeneratePersonaModalOpen(true)}
-                  >
-                    <FaPlus /> &nbsp; Generate New Persona
-                  </GenerateButton>
                 </FVFlex>
               </RightSidebarBody>
             ) : (
@@ -339,7 +383,8 @@ const App: React.FC = () => {
                   onClick={() => selectChatRoom(header.id)}
                   $isSelected={currentChatRoom?.id === header.id}
                 >
-                  {header.recentMessage.message || "No recent message"}
+                  {header.recentMessage?.message.slice(0, 30) ??
+                    "No recent message"}
                 </ChatRoomHeaderItem>
               ))}
             </PersonasList>
@@ -367,12 +412,10 @@ const App: React.FC = () => {
               </NewPersonaButton>
             </div>
           </Sidebar>
-
-          {/* Chat Area */}
           <ChatArea>
             <Messages>
               {currentChatRoom &&
-                currentChatRoom.messages.map((message, idx) => {
+                messages.map((message, idx) => {
                   const sender = participants.find(
                     (p) => p.id === message.sender
                   );
@@ -391,12 +434,27 @@ const App: React.FC = () => {
                           <MessageSender>{sender.name}</MessageSender>
                         )}
                         <MessageText $ismine={isMine}>
-                          {message.message}
+                          {message.message === "..." && !isMine ? (
+                            <ClipLoader
+                              color="#000"
+                              loading={true}
+                              size={20}
+                              cssOverride={{marginLeft: "30px", marginRight: "30px"}}
+                            />
+                          ) : (
+                            message.message.split("\n").map((line, index) => (
+                              <React.Fragment key={index}>
+                                {line}
+                                <br />
+                              </React.Fragment>
+                            ))
+                          )}
                         </MessageText>
                       </MessageContent>
                     </MessageRow>
                   );
                 })}
+              <div ref={chatRoomRef} />
             </Messages>
             <InputArea>
               <Input
@@ -411,32 +469,9 @@ const App: React.FC = () => {
               </SendButton>
             </InputArea>
           </ChatArea>
-
-          {/* Right Sidebar */}
           <RightSidebar />
         </MainContent>
       </AppContainer>
-      <GeneratePersonaModal
-        isOpen={isGeneratePersonaModalOpen}
-        onClose={() => {
-          setGeneratePersonaModalOpen(false);
-        }}
-        onCreate={async (
-          name: string,
-          role: string,
-          avatar: AvatarType,
-          file: File
-        ) => {
-          await addPersona(name, role, avatar);
-          const personas = await fetchMockedPersonas();
-          setAllPersonas(personas);
-          setFilteredPersonas(
-            allPersonas.filter((persona) =>
-              persona.name.toLowerCase().includes(searchInput.toLowerCase())
-            )
-          );
-        }}
-      />
     </Background>
   );
 };

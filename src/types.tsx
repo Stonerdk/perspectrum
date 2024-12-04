@@ -2,6 +2,7 @@ export interface ChatMessage {
     sender: string;
     message: string;
     timestamp: string;
+    id: string;
 }
 
 export interface ChatRoom {
@@ -12,7 +13,7 @@ export interface ChatRoom {
 
 export interface ChatRoomHeader {
     id: string;
-    recentMessage: ChatMessage;
+    recentMessage: ChatMessage | null;
 }
 
 export interface Persona  {

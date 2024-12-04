@@ -1,44 +1,44 @@
 [
     {
       "id": "1",
-      "name": "Emily",
-      "role": "LLM Architect",
+      "name": "HB",
+      "role": "Project Owner",
       "color": "green",
       "avatar": {
-        "accessoriesType": "Prescription01",
+        "accessoriesType": "Blank",
         "backgroundColor": "PastelGreen",
-        "clotheColor": "Blue02",
-        "clotheType": "Hoodie",
+        "clotheColor": "White",
+        "clotheType": "BlazerSweater",
         "eyeType": "Default",
         "eyebrowType": "UpDown",
-        "hairColor": "Platinum",
+        "hairColor": "Black",
         "mouthType": "Twinkle",
-        "skinColor": "Brown",
-        "topType": "LongHairCurly"
+        "skinColor": "Pale",
+        "topType": "LongHairBob"
       }
     },
     {
       "id": "2",
-      "name": "Stone",
-      "role": "System Engineer",
+      "name": "SY",
+      "role": "AI Expert",
       "color": "orange",
       "avatar": {
-        "accessoriesType": "Prescription01",
-        "backgroundColor": "PastelYellow",
-        "clotheColor": "PastelBlue",
+        "accessoriesType": "Blank",
+        "backgroundColor": "PastelGreen",
+        "clotheColor": "White",
         "clotheType": "Hoodie",
-        "eyeType": "Surprised",
-        "eyebrowType": "Default",
-        "hairColor": "Auburn",
-        "mouthType": "Default",
-        "skinColor": "DarkBrown",
-        "topType": "NoHair"
+        "eyeType": "Default",
+        "eyebrowType": "UpDown",
+        "hairColor": "Black",
+        "mouthType": "Twinkle",
+        "skinColor": "Pale",
+        "topType": "LongHairBigHair"
       }
     },
     {
       "id": "3",
       "name": "Green",
-      "role": "PO",
+      "role": "Businessman",
       "color": "purple",
       "avatar": {
         "accessoriesType": "Blank",
