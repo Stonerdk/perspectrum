@@ -239,7 +239,6 @@ export const Messages = styled.div`
   }
 `;
 
-// 메시지 행 (내 메시지와 상대 메시지 구분)
 export const MessageRow = styled.div<{ $ismine: boolean }>`
   display: flex;
   align-items: flex-start;
@@ -248,19 +247,18 @@ export const MessageRow = styled.div<{ $ismine: boolean }>`
   flex-direction: ${({ $ismine }) => ($ismine ? "row-reverse" : "row")};
 `;
 
-// 메시지 내용 컨테이너 (내 메시지는 오른쪽 정렬)
 export const MessageContent = styled.div<{ $ismine: boolean }>`
   display: flex;
   flex-direction: column;
   align-items: ${({ $ismine }) => ($ismine ? "flex-end" : "flex-start")};
 `;
 
-// 메시지 텍스트 (배경색 포함)
 export const MessageText = styled.div<{ $ismine?: boolean }>`
-  background-color: ${({ $ismine }) => ($ismine ? "#6c63ff" : "#888")};
+  background-color: ${({ $ismine }) => ($ismine ? "#6c63ff" : "#ccc")};
   color: ${({ $ismine }) => ($ismine ? "#fff" : "#000")};
   padding: 8px 12px;
   border-radius: 10px;
+  max-width: 400px;
   border-top-right-radius: ${({ $ismine }) => ($ismine ? "0" : "10px")};
   border-top-left-radius: ${({ $ismine }) => ($ismine ? "10px" : "0")};
 `;
