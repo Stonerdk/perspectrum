@@ -14,8 +14,7 @@ import uuid
 app = FastAPI()
 
 origins = [
-    "http://localhost:5173",  # 프론트엔드 주소
-    # 필요한 도메인 추가
+    "http://localhost:5173",
 ]
 
 app.add_middleware(
@@ -37,9 +36,11 @@ async def api_websocket_endpoint(websocket: WebSocket, chatroom_id: str):
     except WebSocketDisconnect:
         manager.disconnect(chatroom_id, websocket)
 
+
 @app.get("/personas", response_model=List[Persona])
 async def api_fetch_personas():
     return await get_personas()
+
 
 @app.get("/personas/{id}", response_model=Persona)
 async def api_get_persona_by_id(id: str):
@@ -47,6 +48,7 @@ async def api_get_persona_by_id(id: str):
     if persona:
         return persona
     raise HTTPException(status_code=404, detail="Persona not found")
+
 
 @app.get("/chatrooms", response_model=List[ChatRoomHeader])
 async def api_fetch_chatroom_headers():
@@ -57,13 +59,15 @@ async def api_fetch_chatroom_headers():
         headers.append(ChatRoomHeader(id=chatroom.id, recentMessage=recent_message))
     return headers
 
+
 @app.post("/chatrooms/{id}/message")
 async def api_add_chat(id: str, body: AddMessage):
     chatroom = await get_chatroom_by_id(id)
     if chatroom:
-        await add_chat(chatroom, body.sender, body.message)
+        await start_debate(chatroom, body.sender, body.message)
         return {"message": "Message added"}
     raise HTTPException(status_code=404, detail="Chat room not found")
+
 
 @app.get("/chatrooms/{id}", response_model=ChatRoom)
 async def api_fetch_chatroom(id: str):
@@ -72,9 +76,11 @@ async def api_fetch_chatroom(id: str):
         return chatroom
     raise HTTPException(status_code=404, detail="Chat room not found")
 
+
 @app.post("/chatrooms", response_model=ChatRoom)
 async def api_add_chatroom():
     return await add_chatroom()
+
 
 @app.put("/chatrooms/{id}/participants")
 async def api_modify_participants(id: str, participants: List[str]):
@@ -84,16 +90,13 @@ async def api_modify_participants(id: str, participants: List[str]):
         return {"message": "Participants updated"}
     raise HTTPException(status_code=404, detail="Chat room not found")
 
+
 @app.post("/chatrooms/{id}/recommend")
 async def api_recommend_participants(id: str, body: MessageBody):
     chatroom = await get_chatroom_by_id(id)
     if chatroom:
-        recommended_ids = await recommend_participants(chatroom, body.message)
-        chatroom.participants = recommended_ids
-        ret = [await get_persona_by_id(p_id) for p_id in recommended_ids]
-        ret = [p for p in ret if p]
-        return {"participants": ret}
-
+        recommended_personas = await recommend_participants(chatroom, body.message)
+        return {"participants": recommended_personas}
     raise HTTPException(status_code=404, detail="Chat room not found")
 # deprecated
 # @app.post("/personas", response_model=Persona)

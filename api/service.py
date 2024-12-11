@@ -5,28 +5,45 @@ import uuid
 import asyncio
 import random
 from ws import manager
+from graphrag_chatbot import bot
 
+active_dialogues = {}
 
-async def recommend_participants(chatroom: ChatRoom, message: str):
-    # TODO
-    return ["1", "2", "3"]
+async def recommend_participants(chatroom: ChatRoom, message: str, union=True):
+    recommended_topics = bot.recommend_topics(message)
+    personas = bot.recommend_personas(message, recommended_topics) # role
+    personas = list(map(get_persona_by_role, personas))
+    ids = set([p.id for p in personas])
+    if union:
+        chatroom.participants = list(set(chatroom.participants) | ids) # UNION
+    else:
+        chatroom.participants = ids
+    return personas
 
-async def query_to_persona(persona: Persona, message: str):
-    # TODO
-    await asyncio.sleep(random.random() * 3)
-    return "Response from " + persona.name
 
 async def get_personas():
     return personas
 
+
 async def get_persona_by_id(id: str):
     return next((p for p in personas if p.id == id), None)
+
+
+async def get_id_by_role(role: str):
+    return next((p.id for p in personas if p.role == role), None)
+
+
+def get_persona_by_role(role: str):
+    return next((p for p in personas if p.role == role), None)
+
 
 async def get_chatrooms():
     return chatrooms
 
+
 async def get_chatroom_by_id(id: str):
     return next((c for c in chatrooms if c.id == id), None)
+
 
 async def add_chatroom():
     chatrooms = await get_chatrooms()
@@ -38,9 +55,49 @@ async def add_chatroom():
     chatrooms.append(new_chatroom)
     return new_chatroom
 
-async def add_chat(chatroom: ChatRoom, sender: str, message: str):
+
+async def send_message(chatroom: ChatRoom, sender: str, message: str):
     new_message = ChatMessage(id=str(uuid.uuid4()), sender=sender, message=message, timestamp=datetime.utcnow().isoformat())
     chatroom.messages.append(new_message)
+    await manager.send_message(chatroom.id, new_message.model_dump())
+
+
+async def start_debate(chatroom: ChatRoom, sender: str, message: str):
+    if chatroom.id in active_dialogues:
+        return False
+    await send_message(chatroom, sender, message)
+
+    gen = bot.debate_question(message, chatroom.participants)
+    async def run():
+        try:
+            async for persona, response in gen:
+                await send_message(chatroom, persona, response)
+        except asyncio.CancelledError:
+            await manager.send_message(chatroom.id, {"system": "Debate has been stopped."})
+        except Exception as e:
+            await manager.send_message(chatroom.id, {"system": f"An error occurred: {str(e)}"})
+        finally:
+            active_dialogues.pop(chatroom.id, None)
+    active_dialogues[chatroom.id] = asyncio.create_task(run())
+
+
+async def cancel_debate(chatroom: ChatRoom):
+    if chatroom.id not in active_dialogues:
+        return False
+    active_dialogues[chatroom.id].cancel()
+    return True
+
+# TODO: 비동기 대답
+
+async def query_to_persona(persona: Persona, message: str):
+    topic = ["economics", "science", "social", "politics"][int(persona.id) - 1]
+    answers = bot.answer_question(message, [topic])
+    if answers:
+        return answers[topic]
+    return "An error occured"
+
+async def add_chat(chatroom: ChatRoom, sender: str, message: str):
+    await send_message(chatroom, sender, message)
 
     if len(chatroom.messages) == 0 and len(chatroom.participants) == 0:
         chatroom.participants = await recommend_participants(chatroom, message)
@@ -55,11 +112,10 @@ async def handle_persona_response(chatroom, persona_id, user_message):
         pending_message = ChatMessage(
             id=str(uuid.uuid4()),
             sender=persona_id,
-            message="...",  # 또는 처리 중을 나타내는 특별한 표시
+            message="...",
             timestamp=datetime.utcnow().isoformat()
         )
         chatroom.messages.append(pending_message)
-        await manager.send_message(chatroom.id, pending_message.dict())
-        response = await query_to_persona(persona, user_message)
-        pending_message.message = response
-        await manager.send_message(chatroom.id, pending_message.dict())
+        await manager.send_message(chatroom.id, pending_message.model_dump())
+        pending_message.message = await query_to_persona(persona, user_message)
+        await manager.send_message(chatroom.id, pending_message.model_dump())
