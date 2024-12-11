@@ -1,64 +1,53 @@
-import React, { useEffect, useState, useCallback, useRef } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { FaPaperPlane, FaUserPlus } from "react-icons/fa";
+import ClipLoader from "react-spinners/ClipLoader";
 import {
-  fetchMockedChatRoomHeaders,
-  fetchMockedChatRoom,
-  getPersonaById,
-  fetchMockedPersonas,
   addChat,
-  addPersona,
-  modifyParticipants,
   addChatRoom,
-  retrieveRecommendedPersona,
+  fetchMockedChatRoom,
+  fetchMockedChatRoomHeaders,
+  fetchMockedPersonas,
+  modifyParticipants,
+  retrieveRecommendedPersona
 } from "./api";
 import {
-  Background,
   AppContainer,
-  Navbar,
-  NavbarButton,
-  MainContent,
-  Sidebar,
-  ChatRoomHeaderItem,
-  ChatWrapper,
-  PersonaWrapper,
-  PersonaIcon,
-  PersonaDetails,
-  PersonaName,
-  PersonaRole,
-  NewPersonaButton,
-  PlusIcon,
+  Background,
+  CancelButton,
   ChatArea,
-  Messages,
-  MessageRow,
-  MessageAvatar,
-  MessageContent,
-  MessageSender,
-  MessageText,
-  InputArea,
-  Input,
-  SendButton,
-  PersonasList,
-  RightSidebarBody,
-  SearchInput,
+  ChatRoomHeaderItem,
   CommitButton,
   FHFlex,
   FVFlex,
-  CancelButton,
-  GenerateButton,
-  ToggleButton,
+  Input,
+  InputArea,
+  MainContent,
+  MessageContent,
+  MessageRow,
+  Messages,
+  MessageSender,
+  MessageText,
+  NewPersonaButton,
+  PersonaDetails,
+  PersonaName,
+  PersonaRole,
+  PersonasList,
+  PersonaWrapper,
+  RightSidebarBody,
+  SearchInput,
+  SendButton,
+  Sidebar,
+  ToggleButton
 } from "./Components";
-import { FaPaperPlane, FaPlus, FaUserPlus } from "react-icons/fa";
-import ClipLoader from "react-spinners/ClipLoader";
 
-import {
-  Persona,
-  ChatMessage,
-  ChatRoomHeader,
-  ChatRoom,
-  AvatarType,
-} from "./types";
-import GeneratePersonaModal from "./PersonaModal";
 import Avatar from "avataaars";
 import { BiSolidMessageAdd } from "react-icons/bi";
+import {
+  ChatMessage,
+  ChatRoom,
+  ChatRoomHeader,
+  Persona
+} from "./types";
 
 interface SearchInputProps {
   value: string;
@@ -439,7 +428,10 @@ const App: React.FC = () => {
                               color="#000"
                               loading={true}
                               size={20}
-                              cssOverride={{marginLeft: "30px", marginRight: "30px"}}
+                              cssOverride={{
+                                marginLeft: "30px",
+                                marginRight: "30px",
+                              }}
                             />
                           ) : (
                             message.message.split("\n").map((line, index) => (
