@@ -5,6 +5,11 @@ export interface ChatMessage {
     id: string;
 }
 
+export interface SystemMessage {
+    system: string;
+    aux: string;
+}
+
 export interface ChatRoom {
     id: string;
     participants: string[];

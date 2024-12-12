@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { FaPaperPlane, FaUserPlus } from "react-icons/fa";
+import { FaPaperPlane, FaStop, FaUserPlus } from "react-icons/fa";
 import ClipLoader from "react-spinners/ClipLoader";
 import {
   addChat,
@@ -8,7 +8,9 @@ import {
   fetchMockedChatRoomHeaders,
   fetchMockedPersonas,
   modifyParticipants,
-  retrieveRecommendedPersona
+  retrieveRecommendedPersona,
+  cancelChat,
+  continueChat,
 } from "./api";
 import {
   AppContainer,
@@ -17,8 +19,10 @@ import {
   ChatArea,
   ChatRoomHeaderItem,
   CommitButton,
+  ContinueButtonWrapper,
   FHFlex,
   FVFlex,
+  GenerateButton,
   Input,
   InputArea,
   MainContent,
@@ -37,7 +41,7 @@ import {
   SearchInput,
   SendButton,
   Sidebar,
-  ToggleButton
+  ToggleButton,
 } from "./Components";
 
 import Avatar from "avataaars";
@@ -46,8 +50,10 @@ import {
   ChatMessage,
   ChatRoom,
   ChatRoomHeader,
-  Persona
+  Persona,
+  SystemMessage,
 } from "./types";
+import { GiDiscussion } from "react-icons/gi";
 
 interface SearchInputProps {
   value: string;
@@ -68,8 +74,6 @@ const SearchInputComponent: React.FC<SearchInputProps> = ({
   );
 };
 
-const SearchInputMemo = React.memo(SearchInputComponent);
-
 const App: React.FC = () => {
   // API
   const [chatRoomHeaders, setChatRoomHeaders] = useState<ChatRoomHeader[]>([]);
@@ -82,12 +86,12 @@ const App: React.FC = () => {
   );
 
   // Loading/Styles
-  const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState<boolean>(true);
-  const [isRightSidebarOpen, setIsRightSidebarOpen] = useState<boolean>(true);
   const [loadingParticipants, setLoadingParticipants] =
     useState<boolean>(false);
-  const [isGeneratePersonaModalOpen, setGeneratePersonaModalOpen] =
-    useState<boolean>(false);
+  useState<boolean>(false);
+  const [generating, setGenerating] = useState<boolean>(false);
+  const [recommending, setRecommending] = useState<boolean>(false);
+  const [showContinue, setShowContinue] = useState<boolean>(false);
 
   // INPUT
   const [messageInput, setMessageInput] = useState<string>("");
@@ -114,24 +118,49 @@ const App: React.FC = () => {
       };
 
       websocket.current.onmessage = (event) => {
-        const message: ChatMessage = JSON.parse(event.data);
-        setMessages((prevMessages) => {
-          const index = prevMessages.findIndex((msg) => msg.id === message.id);
-          if (index !== -1) {
-            const updatedMessages = [...prevMessages];
-            updatedMessages[index] = message;
-            return updatedMessages;
+        const message: ChatMessage | SystemMessage = JSON.parse(event.data);
+        if ("system" in message) {
+          if (message.system == "continue") {
+            setShowContinue(true);
+            setGenerating(false);
+          } else if (message.system == "end") {
+            setGenerating(false);
+            console.log("Conversation ended")
+          } else if (message.system == "cancel") {
+            console.log("Conversation canceled")
+          } else if (message.system == "error") {
+            console.error("An error occuring from the system", message.aux);
           } else {
-            return [...prevMessages, message];
+            console.error(
+              "Invalid system message recieved from backend",
+              message
+            );
           }
-        });
+        } else if ("sender" in message) {
+          setMessages((prevMessages) => {
+            const index = prevMessages.findIndex(
+              (msg) => msg.id === message.id
+            );
+            if (index !== -1) {
+              const updatedMessages = [...prevMessages];
+              updatedMessages[index] = message;
+              return updatedMessages;
+            } else {
+              return [...prevMessages, message];
+            }
+          });
+        } else {
+          console.error("Invalid message recieved from backend", message);
+        }
       };
 
       websocket.current.onclose = () => {
+        setGenerating(false);
         console.log("WebSocket 연결 종료");
       };
 
       return () => {
+        setGenerating(false);
         websocket.current?.close();
       };
     }
@@ -143,20 +172,51 @@ const App: React.FC = () => {
 
   const sendMessage = async () => {
     if (!currentChatRoom || messageInput.trim() === "") return;
-
-    if (messages.length == 0 && participants.length == 0) {
+    setShowContinue(false);
+    setMessageInput("");
+    setGenerating(true);
+    setRecommending(true);
+    try {
       const recommendedParticipants = await retrieveRecommendedPersona(
         currentChatRoom.id,
         messageInput
       );
       setParticipants(recommendedParticipants);
+    } catch (e) {
+      console.error(e);
+      setRecommending(false);
+      setGenerating(false);
+      return;
     }
+    setRecommending(false);
 
-    await addChat(currentChatRoom.id, "0", messageInput);
-    fetchMockedChatRoom(currentChatRoom.id).then((chatroom: ChatRoom) => {
-      setCurrentChatRoom(chatroom);
-    });
-    setMessageInput(""); // 입력창 초기화
+    try {
+      await addChat(currentChatRoom.id, "0", messageInput);
+    } catch (e) {
+      console.error(e);
+      setGenerating(false);
+    }
+    // fetchMockedChatRoom(currentChatRoom.id).then((chatroom: ChatRoom) => {
+    //   setCurrentChatRoom(chatroom);
+    // });
+  };
+
+  const continueMessage = async () => {
+    setShowContinue(false);
+    setGenerating(true);
+    try {
+      await continueChat(currentChatRoom!.id);
+    } catch (e) {
+      console.error(e);
+      setGenerating(false);
+    }
+  }
+
+  const cancelMessage = async () => {
+    if (currentChatRoom) {
+      await cancelChat(currentChatRoom.id);
+      setGenerating(true);
+    }
   };
 
   useEffect(() => {
@@ -251,7 +311,7 @@ const App: React.FC = () => {
       []
     );
     return (
-      <Sidebar $isOpen={isRightSidebarOpen} $position="right">
+      <Sidebar $isOpen={true} $position="right">
         {loadingParticipants ? (
           <div>Loading participants...</div>
         ) : (
@@ -357,14 +417,11 @@ const App: React.FC = () => {
   return (
     <Background>
       {/* Navbar */}
-      <AppContainer
-        $leftSidebarOpen={isLeftSidebarOpen}
-        $rightSidebarOpen={isRightSidebarOpen}
-      >
+      <AppContainer $leftSidebarOpen={true} $rightSidebarOpen={true}>
         {/* Main Content */}
         <MainContent>
           {/* Left Sidebar */}
-          <Sidebar $isOpen={isLeftSidebarOpen} $position="left">
+          <Sidebar $isOpen={true} $position="left">
             <PersonasList>
               {chatRoomHeaders.map((header) => (
                 <ChatRoomHeaderItem
@@ -393,7 +450,6 @@ const App: React.FC = () => {
                       }
                     );
                     selectChatRoom(chatroom.id);
-                    setGeneratePersonaModalOpen(false);
                   });
                 }}
               >
@@ -403,49 +459,61 @@ const App: React.FC = () => {
           </Sidebar>
           <ChatArea>
             <Messages>
-              {currentChatRoom &&
-                messages.map((message, idx) => {
-                  const sender = participants.find(
-                    (p) => p.id === message.sender
-                  );
-                  const isMine = message.sender === "0";
-                  return (
-                    <MessageRow key={idx} $ismine={isMine}>
-                      {!isMine && sender && (
-                        <Avatar
-                          style={{ width: "40px", height: "40px" }}
-                          avatarStyle="Circle"
-                          {...sender.avatar}
-                        />
-                      )}
-                      <MessageContent $ismine={isMine}>
+              {currentChatRoom && (
+                <>
+                  {messages.map((message, idx) => {
+                    const sender = participants.find(
+                      (p) => p.id === message.sender
+                    );
+                    const isMine = message.sender === "0";
+                    return (
+                      <MessageRow key={idx} $ismine={isMine}>
                         {!isMine && sender && (
-                          <MessageSender>{sender.name}</MessageSender>
+                          <Avatar
+                            style={{ width: "40px", height: "40px" }}
+                            avatarStyle="Circle"
+                            {...sender.avatar}
+                          />
                         )}
-                        <MessageText $ismine={isMine}>
-                          {message.message === "..." && !isMine ? (
-                            <ClipLoader
-                              color="#000"
-                              loading={true}
-                              size={20}
-                              cssOverride={{
-                                marginLeft: "30px",
-                                marginRight: "30px",
-                              }}
-                            />
-                          ) : (
-                            message.message.split("\n").map((line, index) => (
-                              <React.Fragment key={index}>
-                                {line}
-                                <br />
-                              </React.Fragment>
-                            ))
+                        <MessageContent $ismine={isMine}>
+                          {!isMine && sender && (
+                            <MessageSender>{sender.name}</MessageSender>
                           )}
-                        </MessageText>
-                      </MessageContent>
-                    </MessageRow>
-                  );
-                })}
+                          <MessageText $ismine={isMine}>
+                            {message.message === "..." && !isMine ? (
+                              <ClipLoader
+                                color="#000"
+                                loading={true}
+                                size={20}
+                                cssOverride={{
+                                  marginLeft: "30px",
+                                  marginRight: "30px",
+                                }}
+                              />
+                            ) : (
+                              message.message.split("\n").map((line, index) => (
+                                <React.Fragment key={index}>
+                                  {line}
+                                  <br />
+                                </React.Fragment>
+                              ))
+                            )}
+                          </MessageText>
+                        </MessageContent>
+                      </MessageRow>
+                    );
+                  })}
+                  {showContinue && (
+                    <ContinueButtonWrapper>
+                      <GenerateButton onClick={continueMessage}>
+                        <GiDiscussion />&nbsp;&nbsp;
+                        <strong>Go Deeper!</strong>
+                      </GenerateButton>
+                      <CancelButton>Cacnel</CancelButton>
+                    </ContinueButtonWrapper>
+                  )}
+                </>
+              )}
               <div ref={chatRoomRef} />
             </Messages>
             <InputArea>
@@ -455,10 +523,17 @@ const App: React.FC = () => {
                 value={messageInput}
                 onChange={(e) => setMessageInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+                disabled={!currentChatRoom || generating}
               />
-              <SendButton onClick={sendMessage}>
-                <FaPaperPlane size={16} />
-              </SendButton>
+              {generating ? (
+                <SendButton onClick={cancelMessage}>
+                  <FaStop size={16} />
+                </SendButton>
+              ) : (
+                <SendButton onClick={sendMessage}>
+                  <FaPaperPlane size={16} />
+                </SendButton>
+              )}
             </InputArea>
           </ChatArea>
           <RightSidebar />

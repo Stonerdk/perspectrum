@@ -342,8 +342,20 @@ export const CommitButton = styled.button`
   }
 `;
 
+export const ContinueButtonWrapper = styled.div`
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  margin-top: 30px;
+  margin-bottom: 30px;
+`
+
 export const CancelButton = styled.button`
   width: 100%;
+  max-width: 150px;
   background-color: #888888;
   color: #fff;
   border: none;
@@ -361,7 +373,8 @@ export const GenerateButton = styled.button`
   align-items: center;
   justify-content: center;
   width: 100%;
-  background-color: #77bc44;
+  max-width: 300px;
+  background-color: #6c63ff;
   color: #fff;
   border: none;
   padding: 10px;
@@ -369,7 +382,7 @@ export const GenerateButton = styled.button`
   cursor: pointer;
   text-align: center;
   &:hover {
-    background-color: #99de66;
+    background-color: #5a54d1;
   }
 `;
 

@@ -1,0 +1,14 @@
+python3 -m pip install langchain pypdf2 faiss-cpu sentence-transformers
+python3 -m pip install openai langchain faiss-cpu
+python3 -m pip install fitz
+python3 -m pip install pymupdf
+python3 -m pip install openai==0.28
+python3 -m pip install --upgrade langchain langchain-openai openai
+python3 -m pip install -U langchain-community
+python3 -m pip install pypdf
+python3 -m pip install tiktoken
+python3 -m pip install pdfplumber
+python3 -m pip install -U langchain-community
+python3 -m pip install chardet
+python3 -m pip install tiktoken
+python3 -m pip install uvicorn fastapi
