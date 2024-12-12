@@ -68,6 +68,22 @@ async def api_add_chat(id: str, body: AddMessage):
         return {"message": "Message added"}
     raise HTTPException(status_code=404, detail="Chat room not found")
 
+@app.post("/chatrooms/{id}/continue")
+async def api_continue_debate(id: str):
+    chatroom = await get_chatroom_by_id(id)
+    if chatroom:
+        await continue_debate(chatroom)
+        return {"message": "Debate Continuing"}
+    raise HTTPException(status_code=404, detail="Chat room not found")
+
+@app.post("/chatrooms/{id}/cancel")
+async def api_cancel_chat(id: str):
+    chatroom = await get_chatroom_by_id(id)
+    if chatroom:
+        await cancel_debate(chatroom)
+        return {"message": "Debate cancelled"}
+    raise HTTPException(status_code=404, detail="Chat room not found")
+
 
 @app.get("/chatrooms/{id}", response_model=ChatRoom)
 async def api_fetch_chatroom(id: str):

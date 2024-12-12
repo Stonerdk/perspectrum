@@ -21,4 +21,7 @@ class ConnectionManager:
             for connection in self.active_connections[chatroom_id]:
                 await connection.send_json(message)
 
+    async def send_system(self, chatroom_id: str, message: str, aux: str = ""):
+        await self.send_message(chatroom_id, {"system": message, "aux": aux })
+
 manager = ConnectionManager()

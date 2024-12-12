@@ -52,6 +52,14 @@ export const addChat = async (roomId: string, sender: string, message: string): 
     await axios.post(fetchUrl(`chatrooms/${roomId}/message`), { sender, message });
 };
 
+export const continueChat = async (roomId: string): Promise<void> => {
+    await axios.post(fetchUrl(`chatrooms/${roomId}/continue`), {});
+}
+
+export const cancelChat = async (roomId: string) => {
+    await axios.post(`chatrooms/${roomId}/cancel`);
+}
+
 export const retrieveRecommendedPersona = async (roomId: string, message: string): Promise<Persona[]> => {
     const response = await axios.post(fetchUrl(`chatrooms/${roomId}/recommend`), { message });
     return response.data.participants;

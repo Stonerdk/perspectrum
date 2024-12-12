@@ -67,27 +67,55 @@ async def start_debate(chatroom: ChatRoom, sender: str, message: str):
         return False
     await send_message(chatroom, sender, message)
 
-    gen = bot.debate_question(message, chatroom.participants)
+    gen = bot.query(message, chatroom.participants)
     async def run():
         try:
             async for persona, response in gen:
                 await send_message(chatroom, persona, response)
         except asyncio.CancelledError:
-            await manager.send_message(chatroom.id, {"system": "Debate has been stopped."})
+            await manager.send_system(chatroom.id, "cancel")
         except Exception as e:
-            await manager.send_message(chatroom.id, {"system": f"An error occurred: {str(e)}"})
+            await manager.send_system(chatroom.id, "error", str(e))
         finally:
             active_dialogues.pop(chatroom.id, None)
+            await manager.send_system(chatroom.id, "continue")
+    active_dialogues[chatroom.id] = asyncio.create_task(run())
+
+
+async def continue_debate(chatroom: ChatRoom):
+    if chatroom.id in active_dialogues:
+        return False
+    gen = bot.debate()
+    async def run():
+        try:
+            async for persona, response in gen:
+                await send_message(chatroom, persona, response)
+        except asyncio.CancelledError:
+            await manager.send_system(chatroom.id, "error")
+        except Exception as e:
+            await manager.send_system(chatroom.id, "An error occurred", str(e))
+        finally:
+            active_dialogues.pop(chatroom.id, None)
+            if bot.is_debating():
+                await manager.send_system(chatroom.id, "continue")
+            else:
+                await manager.send_system(chatroom.id, "end")
     active_dialogues[chatroom.id] = asyncio.create_task(run())
 
 
 async def cancel_debate(chatroom: ChatRoom):
     if chatroom.id not in active_dialogues:
         return False
+    active_dialogues.pop(chatroom.id, None)
     active_dialogues[chatroom.id].cancel()
     return True
 
-# TODO: 비동기 대답
+
+async def reset_debate(chatroom: ChatRoom):
+    if chatroom.id in active_dialogues:
+        active_dialogues[chatroom.id].cancel()
+    await bot.reset()
+    return True
 
 async def query_to_persona(persona: Persona, message: str):
     topic = ["economics", "science", "social", "politics"][int(persona.id) - 1]
