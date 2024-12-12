@@ -48,16 +48,24 @@ export const modifyParticipants = async (roomId: string, participants: string[])
     await axios.put(fetchUrl(`chatrooms/${roomId}/participants`), participants);
 };
 
-export const addChat = async (roomId: string, sender: string, message: string): Promise<void> => {
-    await axios.post(fetchUrl(`chatrooms/${roomId}/message`), { sender, message });
+export const sendChat = async (roomId: string, sender: string, message: string): Promise<void> => {
+    await axios.post(fetchUrl(`chatrooms/${roomId}/send`), { sender, message });
+}
+
+export const retrieveChat = async (roomId: string): Promise<void> => {
+    await axios.post(fetchUrl(`chatrooms/${roomId}/retrieve`));
 };
 
-export const continueChat = async (roomId: string): Promise<void> => {
-    await axios.post(fetchUrl(`chatrooms/${roomId}/continue`), {});
+export const debateChat = async (roomId: string): Promise<void> => {
+    await axios.post(fetchUrl(`chatrooms/${roomId}/debate`), {});
 }
 
 export const cancelChat = async (roomId: string) => {
-    await axios.post(`chatrooms/${roomId}/cancel`);
+    await axios.post(fetchUrl(`chatrooms/${roomId}/cancel`));
+}
+
+export const resetChat = async (roomId: string) => {
+    await axios.post(fetchUrl(`chatrooms/${roomId}/reset`));
 }
 
 export const retrieveRecommendedPersona = async (roomId: string, message: string): Promise<Persona[]> => {
