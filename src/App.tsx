@@ -1,8 +1,13 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { FaPaperPlane, FaStop, FaUserPlus } from "react-icons/fa";
+import {
+  FaAngleDoubleDown,
+  FaPaperPlane,
+  FaStop,
+  FaUserPlus,
+} from "react-icons/fa";
 import ClipLoader from "react-spinners/ClipLoader";
 import {
-  addChat,
+  retrieveChat,
   addChatRoom,
   fetchMockedChatRoom,
   fetchMockedChatRoomHeaders,
@@ -10,7 +15,9 @@ import {
   modifyParticipants,
   retrieveRecommendedPersona,
   cancelChat,
-  continueChat,
+  debateChat,
+  resetChat,
+  sendChat,
 } from "./api";
 import {
   AppContainer,
@@ -27,6 +34,7 @@ import {
   InputArea,
   MainContent,
   MessageContent,
+  MessageRole,
   MessageRow,
   Messages,
   MessageSender,
@@ -38,7 +46,6 @@ import {
   PersonasList,
   PersonaWrapper,
   RightSidebarBody,
-  SearchInput,
   SendButton,
   Sidebar,
   ToggleButton,
@@ -54,25 +61,11 @@ import {
   SystemMessage,
 } from "./types";
 import { GiDiscussion } from "react-icons/gi";
+import BoldText from "./BoldText";
 
-interface SearchInputProps {
-  value: string;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+function capitalizeFirstLetter(val: string) {
+  return String(val).charAt(0).toUpperCase() + String(val).slice(1);
 }
-
-const SearchInputComponent: React.FC<SearchInputProps> = ({
-  value,
-  onChange,
-}) => {
-  return (
-    <SearchInput
-      type="text"
-      placeholder="Search personas..."
-      value={value}
-      onChange={onChange}
-    />
-  );
-};
 
 const App: React.FC = () => {
   // API
@@ -80,7 +73,6 @@ const App: React.FC = () => {
   const [currentChatRoom, setCurrentChatRoom] = useState<ChatRoom | null>(null);
   const [participants, setParticipants] = useState<Persona[]>([]);
   const [allPersonas, setAllPersonas] = useState<Persona[]>([]);
-  const [filteredPersonas, setFilteredPersonas] = useState<Persona[]>([]);
   const [toggledPersonas, setToggledPersonas] = useState<Set<string>>(
     new Set()
   );
@@ -98,7 +90,6 @@ const App: React.FC = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
 
   // Invite
-  const [searchInput, setSearchInput] = useState<string>("");
   const [isAddingPersonas, setIsAddingPersonas] = useState<boolean>(false);
   const [selectedPersonas, setSelectedPersonas] = useState<Set<string>>(
     new Set()
@@ -125,9 +116,9 @@ const App: React.FC = () => {
             setGenerating(false);
           } else if (message.system == "end") {
             setGenerating(false);
-            console.log("Conversation ended")
+            console.log("Conversation ended");
           } else if (message.system == "cancel") {
-            console.log("Conversation canceled")
+            console.log("Conversation canceled");
           } else if (message.system == "error") {
             console.error("An error occuring from the system", message.aux);
           } else {
@@ -175,6 +166,15 @@ const App: React.FC = () => {
     setShowContinue(false);
     setMessageInput("");
     setGenerating(true);
+
+    try {
+      await sendChat(currentChatRoom.id, "0", messageInput);
+    } catch (e) {
+      console.error(e);
+      setGenerating(false);
+      return;
+    }
+
     setRecommending(true);
     try {
       const recommendedParticipants = await retrieveRecommendedPersona(
@@ -191,7 +191,7 @@ const App: React.FC = () => {
     setRecommending(false);
 
     try {
-      await addChat(currentChatRoom.id, "0", messageInput);
+      await retrieveChat(currentChatRoom.id);
     } catch (e) {
       console.error(e);
       setGenerating(false);
@@ -205,17 +205,25 @@ const App: React.FC = () => {
     setShowContinue(false);
     setGenerating(true);
     try {
-      await continueChat(currentChatRoom!.id);
+      await debateChat(currentChatRoom!.id);
     } catch (e) {
       console.error(e);
       setGenerating(false);
     }
-  }
+  };
 
   const cancelMessage = async () => {
     if (currentChatRoom) {
       await cancelChat(currentChatRoom.id);
-      setGenerating(true);
+      setGenerating(false);
+    }
+  };
+
+  const resetMessage = async () => {
+    if (currentChatRoom) {
+      await resetChat(currentChatRoom.id);
+      setGenerating(false);
+      setShowContinue(false);
     }
   };
 
@@ -226,11 +234,6 @@ const App: React.FC = () => {
         fetchMockedChatRoomHeaders(),
       ]);
       setAllPersonas(personas);
-      setFilteredPersonas(
-        personas.filter((persona) =>
-          persona.name.toLowerCase().includes(searchInput.toLowerCase())
-        )
-      );
       setChatRoomHeaders(headers);
       if (headers.length > 0) {
         selectChatRoom(headers[0].id, personas);
@@ -238,6 +241,10 @@ const App: React.FC = () => {
     };
     fetchInitialData();
   }, []);
+
+  useEffect(() => {
+    setSelectedPersonas(new Set(participants.map(({ id }) => id)));
+  }, [participants]);
 
   const togglePersonaParticipation = (id: string) => {
     setSelectedPersonas((prev) => {
@@ -269,14 +276,6 @@ const App: React.FC = () => {
     });
   };
 
-  useEffect(() => {
-    setFilteredPersonas(
-      allPersonas.filter((persona) =>
-        persona.name.toLowerCase().includes(searchInput.toLowerCase())
-      )
-    );
-  }, [searchInput]);
-
   const selectChatRoom = async (id: string, personas?: Persona[]) => {
     setLoadingParticipants(true);
     const chatroom = await fetchMockedChatRoom(id);
@@ -304,22 +303,26 @@ const App: React.FC = () => {
   };
 
   const RightSidebar = () => {
-    const handleSearchChange = useCallback(
-      (e: React.ChangeEvent<HTMLInputElement>) => {
-        setSearchInput(e.target.value);
-      },
-      []
-    );
     return (
       <Sidebar $isOpen={true} $position="right">
-        {loadingParticipants ? (
-          <div>Loading participants...</div>
+        {(loadingParticipants || recommending)? (
+          <div style={{ display: "flex", justifyContent: "center", width: "100%", height: "40%"}}>
+            <ClipLoader
+              color="#fff"
+              loading={true}
+              size={20}
+              cssOverride={{
+                marginLeft: "30px",
+                marginRight: "30px",
+              }}
+            />
+          </div>
         ) : (
           <>
             {isAddingPersonas ? (
               <RightSidebarBody>
                 <PersonasList>
-                  {filteredPersonas.map((persona) => (
+                  {allPersonas.map((persona) => (
                     <PersonaWrapper
                       key={persona.id}
                       onClick={() => togglePersonaParticipation(persona.id)}
@@ -339,17 +342,13 @@ const App: React.FC = () => {
                         />
                         <PersonaDetails>
                           <PersonaName>{persona.name}</PersonaName>
-                          <PersonaRole>{persona.role}</PersonaRole>
+                          <PersonaRole>{capitalizeFirstLetter(persona.role)}</PersonaRole>
                         </PersonaDetails>
                       </div>
                     </PersonaWrapper>
                   ))}
                 </PersonasList>
                 <FVFlex>
-                  {/* <SearchInputMemo
-                    value={searchInput}
-                    onChange={handleSearchChange}
-                  /> */}
                   <FHFlex>
                     <CommitButton onClick={applyPersonaChanges}>
                       Confirm
@@ -383,10 +382,9 @@ const App: React.FC = () => {
                         />
                         <PersonaDetails>
                           <PersonaName>{persona.name}</PersonaName>
-                          <PersonaRole>{persona.role}</PersonaRole>
+                          <PersonaRole>{capitalizeFirstLetter(persona.role)}</PersonaRole>
                         </PersonaDetails>
                       </div>
-                      {/* 토글 버튼 */}
                       <ToggleButton
                         $isSelected={toggledPersonas.has(persona.id)}
                       >
@@ -429,8 +427,9 @@ const App: React.FC = () => {
                   onClick={() => selectChatRoom(header.id)}
                   $isSelected={currentChatRoom?.id === header.id}
                 >
-                  {header.recentMessage?.message.slice(0, 30) ??
-                    "No recent message"}
+                  {(header.recentMessage?.message.length??0) > 20
+                  ? `${header.recentMessage?.message.slice(0, 20)}...`
+                  : header.recentMessage?.message ?? "No recent message"}
                 </ChatRoomHeaderItem>
               ))}
             </PersonasList>
@@ -477,12 +476,15 @@ const App: React.FC = () => {
                         )}
                         <MessageContent $ismine={isMine}>
                           {!isMine && sender && (
-                            <MessageSender>{sender.name}</MessageSender>
+                            <>
+                              <MessageSender>{sender.name}</MessageSender>
+                              <MessageRole>{capitalizeFirstLetter(sender.role)}</MessageRole>
+                            </>
                           )}
                           <MessageText $ismine={isMine}>
                             {message.message === "..." && !isMine ? (
                               <ClipLoader
-                                color="#000"
+                                color="#fff"
                                 loading={true}
                                 size={20}
                                 cssOverride={{
@@ -493,7 +495,7 @@ const App: React.FC = () => {
                             ) : (
                               message.message.split("\n").map((line, index) => (
                                 <React.Fragment key={index}>
-                                  {line}
+                                  <BoldText text={line} />
                                   <br />
                                 </React.Fragment>
                               ))
@@ -506,10 +508,11 @@ const App: React.FC = () => {
                   {showContinue && (
                     <ContinueButtonWrapper>
                       <GenerateButton onClick={continueMessage}>
-                        <GiDiscussion />&nbsp;&nbsp;
+                        <FaAngleDoubleDown />
+                        &nbsp;&nbsp;
                         <strong>Go Deeper!</strong>
                       </GenerateButton>
-                      <CancelButton>Cacnel</CancelButton>
+                      <CancelButton onClick={resetMessage}>Cancel</CancelButton>
                     </ContinueButtonWrapper>
                   )}
                 </>

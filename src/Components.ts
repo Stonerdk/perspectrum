@@ -76,7 +76,7 @@ export const Sidebar = styled.div<{
   $isOpen: boolean;
   $position: "left" | "right";
 }>`
-  width: 250px;
+  width: 200px;
   background-color: #242424;
   display: flex;
   flex-direction: column;
@@ -254,11 +254,11 @@ export const MessageContent = styled.div<{ $ismine: boolean }>`
 `;
 
 export const MessageText = styled.div<{ $ismine?: boolean }>`
-  background-color: ${({ $ismine }) => ($ismine ? "#6c63ff" : "#ccc")};
-  color: ${({ $ismine }) => ($ismine ? "#fff" : "#000")};
+  background-color: ${({ $ismine }) => ($ismine ? "#6c63ff" : "#222")};
+  color: #ccc;
   padding: 8px 12px;
   border-radius: 10px;
-  max-width: 400px;
+  max-width: 650px;
   border-top-right-radius: ${({ $ismine }) => ($ismine ? "0" : "10px")};
   border-top-left-radius: ${({ $ismine }) => ($ismine ? "10px" : "0")};
 `;
@@ -271,7 +271,13 @@ export const MessageAvatar = styled.div`
 
 export const MessageSender = styled.div`
   font-weight: bold;
-  color: #fff;
+  color: #ddd;
+`;
+
+export const MessageRole = styled.div`
+
+  font-size: 12px;
+  color: #ddd;
 `;
 
 export const ChatActions = styled.div`

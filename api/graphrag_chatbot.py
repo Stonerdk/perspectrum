@@ -66,22 +66,22 @@ class GraphRAGChatbot:
         return recommended_personas[:3]
 
 
-    async def query(self, question, personas):
-        self.prev_question = question
+    async def retrieve(self, personas):
         self.prev_personas = personas
         self.persona_contexts = { persona: "" for persona in personas }
         self.dialogue_history = [] # reset
         for persona in personas:
             if persona in self.persona_graphs.items():
                 graph = self.persona_graphs[persona]
-                relevant_nodes = self.retrieve_relevant_nodes(graph, question)
+                relevant_nodes = self.retrieve_relevant_nodes(graph, self.prev_question)
                 self.persona_contexts[persona] = "\n\n".join(
                     [graph.nodes[node]["content"] for node in relevant_nodes]
                 )
 
         chain = self.prompt.query_chain(self.chat_model)
         for persona in personas:
-            response = chain.run(persona=persona, context=self.persona_contexts[persona], question=question)
+            yield (persona, "...")
+            response = chain.run(persona=persona, context=self.persona_contexts[persona], question=self.prev_question)
             self.dialogue_history.append((persona, response))
             yield (persona, response)
         return
@@ -91,6 +91,7 @@ class GraphRAGChatbot:
         total_exchanges = self.max_turns * len(self.prev_personas)
         chain = self.prompt.query_debate_chain(self.chat_model)
         for persona in self.prev_personas:
+            yield (persona, "...")
             history_text = ""
             for speaker, utterance in self.dialogue_history[-6:]:
                 history_text += f"{speaker.capitalize()}: {utterance}\n"
