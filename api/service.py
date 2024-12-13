@@ -72,48 +72,52 @@ async def send(chatroom: ChatRoom, message):
 async def retrieve(chatroom: ChatRoom):
     if chatroom.id in active_dialogues:
         return False
-    gen = bot.retrieve(chatroom.participants)
-    async def run():
+
+    async def handle_persona(persona):
         try:
-            async for persona, response in gen:
-                if response == "...":
-                    new_message = await send_message(chatroom, persona, response)
-                else:
-                    new_message.message = response
-                    await manager.send_message(chatroom.id, new_message.model_dump())
+            placeholder_message = await send_message(chatroom, persona, "...")
+            response = await bot.retrieve(persona)
+            placeholder_message.message = response if response else "I don't have an answer for that."
+            await manager.send_message(chatroom.id, placeholder_message.model_dump())
         except asyncio.CancelledError:
             await manager.send_system(chatroom.id, "cancel")
         except Exception as e:
             await manager.send_system(chatroom.id, "error", str(e))
+
+    async def run():
+        try:
+            tasks = [handle_persona(persona) for persona in chatroom.participants]
+            await asyncio.gather(*tasks)
         finally:
             active_dialogues.pop(chatroom.id, None)
             await manager.send_system(chatroom.id, "continue")
+
     active_dialogues[chatroom.id] = asyncio.create_task(run())
+    return True
 
 
 async def debate(chatroom: ChatRoom):
     if chatroom.id in active_dialogues:
         return False
-    gen = bot.debate()
-    async def run():
-        try:
-            async for persona, response in gen:
-                if response == "...":
-                    new_message = await send_message(chatroom, persona, response)
-                else:
-                    new_message.message = response
-                    await manager.send_message(chatroom.id, new_message.model_dump())
-        except asyncio.CancelledError:
-            await manager.send_system(chatroom.id, "error")
-        except Exception as e:
-            await manager.send_system(chatroom.id, "An error occurred", str(e))
-        finally:
-            active_dialogues.pop(chatroom.id, None)
-            if bot.is_debating():
-                await manager.send_system(chatroom.id, "continue")
-            else:
-                await manager.send_system(chatroom.id, "end")
-    active_dialogues[chatroom.id] = asyncio.create_task(run())
+
+    try:
+        for persona in chatroom.participants:
+            placeholder_message = await send_message(chatroom, persona, "...")
+            response = await bot.debate(persona)
+            placeholder_message.message = response if response else "I don't have an answer for that."
+            await manager.send_message(chatroom.id, placeholder_message.model_dump())
+    except asyncio.CancelledError:
+        await manager.send_system(chatroom.id, "cancel")
+    except Exception as e:
+        await manager.send_system(chatroom.id, "error", str(e))
+    finally:
+        active_dialogues.pop(chatroom.id, None)
+        if bot.is_debating():
+            await manager.send_system(chatroom.id, "continue")
+        else:
+            await manager.send_system(chatroom.id, "end")
+
+    return True
 
 
 async def cancel_debate(chatroom: ChatRoom):

@@ -14,6 +14,7 @@ from dotenv import load_dotenv
 import numpy as np
 import pickle
 from prompt import Prompt
+import asyncio
 
 load_dotenv()
 
@@ -32,6 +33,7 @@ class GraphRAGChatbot:
         ]
         self.prev_question = ""
         self.prev_personas = []
+        self.turns = 0
         self.max_turns = 10
         # heavy
         self.prompt = Prompt(self.topics)
@@ -66,50 +68,50 @@ class GraphRAGChatbot:
         return recommended_personas[:3]
 
 
-    async def retrieve(self, personas):
-        self.prev_personas = personas
-        self.persona_contexts = { persona: "" for persona in personas }
-        self.dialogue_history = [] # reset
-        for persona in personas:
-            if persona in self.persona_graphs.items():
-                graph = self.persona_graphs[persona]
-                relevant_nodes = self.retrieve_relevant_nodes(graph, self.prev_question)
-                self.persona_contexts[persona] = "\n\n".join(
-                    [graph.nodes[node]["content"] for node in relevant_nodes]
-                )
+    async def retrieve(self, persona):
+        self.dialogue_history = []
+        if persona in self.persona_graphs:
+            graph = self.persona_graphs[persona]
+            relevant_nodes = self.retrieve_relevant_nodes(graph, self.prev_question)
+            self.persona_contexts[persona] = "\n\n".join(
+                [graph.nodes[node]["content"] for node in relevant_nodes]
+            )
+        else:
+            self.persona_contexts[persona] = ""
 
         chain = self.prompt.query_chain(self.chat_model)
-        for persona in personas:
-            yield (persona, "...")
-            response = chain.run(persona=persona, context=self.persona_contexts[persona], question=self.prev_question)
-            self.dialogue_history.append((persona, response))
-            yield (persona, response)
-        return
+
+        response = await chain.arun(
+            persona=persona,
+            context=self.persona_contexts.get(persona, ""),
+            question=self.prev_question
+        )
+        self.dialogue_history.append((persona, response))
+        return response
 
 
-    async def debate(self):
-        total_exchanges = self.max_turns * len(self.prev_personas)
+    async def debate(self, persona):
         chain = self.prompt.query_debate_chain(self.chat_model)
-        for persona in self.prev_personas:
-            yield (persona, "...")
-            history_text = ""
-            for speaker, utterance in self.dialogue_history[-6:]:
-                history_text += f"{speaker.capitalize()}: {utterance}\n"
-            response = chain.run(
-                persona=persona,
-                context=self.persona_contexts[persona],
-                dialogue_history=history_text,
-                question=self.prev_question,
-            )
-            self.dialogue_history.append((persona, response))
-            yield (persona, response)
-        if len(self.dialogue_history) >= total_exchanges:
-            self.dialogue_history = []
-            self.prev_personas = []
-            self.prev_question = ""
-        return
+
+        history_text = ""
+        for speaker, utterance in self.dialogue_history[-6:]:
+            history_text += f"{speaker.capitalize()}: {utterance}\n"
+
+        response = await chain.arun(
+            persona=persona,
+            context=self.persona_contexts.get(persona, ""),
+            dialogue_history=history_text,
+            question=self.prev_question,
+        )
+
+        self.dialogue_history.append((persona, response))
+        self.turns += 1
+        if self.turns > self.max_turns:
+            await self.reset()
+        return response
 
     async def reset(self):
+        self.turns = 0
         self.dialogue_history = []
         self.prev_personas = []
         self.prev_question = ""

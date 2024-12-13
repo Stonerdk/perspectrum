@@ -255,7 +255,7 @@ export const MessageContent = styled.div<{ $ismine: boolean }>`
 
 export const MessageText = styled.div<{ $ismine?: boolean }>`
   background-color: ${({ $ismine }) => ($ismine ? "#6c63ff" : "#222")};
-  color: #ccc;
+  color: ${({ $ismine }) => ($ismine ? "#fff" : "#ccc")};
   padding: 8px 12px;
   border-radius: 10px;
   max-width: 650px;
