@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   FaAngleDoubleDown,
   FaPaperPlane,
+  FaPlus,
   FaStop,
   FaUserPlus,
 } from "react-icons/fa";
@@ -14,6 +15,7 @@ import {
   fetchMockedPersonas,
   modifyParticipants,
   retrieveRecommendedPersona,
+  addPersona,
   cancelChat,
   debateChat,
   resetChat,
@@ -50,6 +52,7 @@ import {
   Sidebar,
   ToggleButton,
 } from "./Components";
+import GeneratePersonaModal from "./PersonaModal";
 
 import Avatar from "avataaars";
 import { BiSolidMessageAdd } from "react-icons/bi";
@@ -59,6 +62,7 @@ import {
   ChatRoomHeader,
   Persona,
   SystemMessage,
+  AvatarType
 } from "./types";
 import { GiDiscussion } from "react-icons/gi";
 import BoldText from "./BoldText";
@@ -84,6 +88,7 @@ const App: React.FC = () => {
   const [generating, setGenerating] = useState<boolean>(false);
   const [recommending, setRecommending] = useState<boolean>(false);
   const [showContinue, setShowContinue] = useState<boolean>(false);
+  const [isGeneratePersonaModalOpen, setGeneratePersonaModalOpen] = useState<boolean>(false);
 
   // INPUT
   const [messageInput, setMessageInput] = useState<string>("");
@@ -349,6 +354,12 @@ const App: React.FC = () => {
                   ))}
                 </PersonasList>
                 <FVFlex>
+                <GenerateButton
+                    style={{ alignSelf: "center" }}
+                    onClick={() => setGeneratePersonaModalOpen(true)}
+                  >
+                    <FaPlus /> &nbsp; New Persona
+                  </GenerateButton>
                   <FHFlex>
                     <CommitButton onClick={applyPersonaChanges}>
                       Confirm
@@ -542,6 +553,21 @@ const App: React.FC = () => {
           <RightSidebar />
         </MainContent>
       </AppContainer>
+      <GeneratePersonaModal
+        isOpen={isGeneratePersonaModalOpen}
+        onClose={() => {
+          setGeneratePersonaModalOpen(false);
+        }}
+        onCreate={async (
+          name: string,
+          role: string,
+          avatar: AvatarType,
+        ) => {
+          await addPersona(name, role, avatar);
+          const personas = await fetchMockedPersonas();
+          setAllPersonas(personas);
+        }}
+      />
     </Background>
   );
 };

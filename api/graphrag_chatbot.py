@@ -76,33 +76,47 @@ class GraphRAGChatbot:
             self.persona_contexts[persona] = "\n\n".join(
                 [graph.nodes[node]["content"] for node in relevant_nodes]
             )
+        context = self.persona_contexts.get(persona, "")
+
+        if context:
+            chain = self.prompt.query_chain(self.chat_model)
+            response = await chain.arun(
+                persona=persona,
+                context=context,
+                question=self.prev_question
+            )
         else:
-            self.persona_contexts[persona] = ""
-
-        chain = self.prompt.query_chain(self.chat_model)
-
-        response = await chain.arun(
-            persona=persona,
-            context=self.persona_contexts.get(persona, ""),
-            question=self.prev_question
-        )
+            chain = self.prompt.query_custom_persona_chain(self.chat_model)
+            response = await chain.arun(
+                persona=persona,
+                question=self.prev_question
+            )
         self.dialogue_history.append((persona, response))
         return response
 
 
     async def debate(self, persona):
-        chain = self.prompt.query_debate_chain(self.chat_model)
-
         history_text = ""
         for speaker, utterance in self.dialogue_history[-6:]:
             history_text += f"{speaker.capitalize()}: {utterance}\n"
 
-        response = await chain.arun(
-            persona=persona,
-            context=self.persona_contexts.get(persona, ""),
-            dialogue_history=history_text,
-            question=self.prev_question,
-        )
+        context = self.persona_contexts.get(persona, "")
+
+        if context:
+            chain = self.prompt.query_debate_chain(self.chat_model)
+            response = await chain.arun(
+                persona=persona,
+                context=context,
+                dialogue_history=history_text,
+                question=self.prev_question,
+            )
+        else:
+            chain = self.prompt.query_debate_persona_chain(self.chat_model)
+            response = await chain.arun(
+                persona=persona,
+                dialogue_history=history_text,
+                question=self.prev_question,
+            )
 
         self.dialogue_history.append((persona, response))
         self.turns += 1

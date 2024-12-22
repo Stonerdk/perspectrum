@@ -380,6 +380,24 @@ export const GenerateButton = styled.button`
   justify-content: center;
   width: 100%;
   max-width: 300px;
+  background-color: #4cb34c;
+  color: #fff;
+  border: none;
+  padding: 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  text-align: center;
+  &:hover {
+    background-color: #2c8c2a;
+  }
+`;
+
+export const GoDeeperButton = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 300px;
   background-color: #6c63ff;
   color: #fff;
   border: none;
@@ -391,6 +409,7 @@ export const GenerateButton = styled.button`
     background-color: #5a54d1;
   }
 `;
+
 
 export const ToggleButton = styled.button<{ $isSelected: boolean }>`
   background-color: transparent;

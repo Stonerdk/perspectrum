@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import styled from "styled-components";
-import { Persona, AvatarType } from "./types";
-import { PersonaName, PersonaIcon, SendButton } from "./Components";
+import { AvatarType } from "./types";
+import { SendButton, FHFlex } from "./Components";
 import Avatar from "avataaars";
 import { generateRandomAvatar } from "./RandomAvatars";
 import { FaDice } from "react-icons/fa";
@@ -10,7 +10,7 @@ import { faker } from "@faker-js/faker";
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onCreate: (name: string, role: string, avatar: AvatarType, file: File) => Promise<void>;
+  onCreate: (name: string, role: string, avatar: AvatarType) => Promise<void>;
 }
 
 const ModalContainer = styled.div<{ $isOpen: boolean }>`
@@ -50,13 +50,6 @@ const Input = styled.input`
   border-bottom: 1px solid #fff;
 `;
 
-const FileInput = styled.input`
-  padding: 10px;
-  border-radius: 5px;
-  border: none;
-  color: #fff;
-`;
-
 const ConfirmButton = styled.button`
   background: #6c63ff;
   color: #fff;
@@ -64,7 +57,6 @@ const ConfirmButton = styled.button`
   padding: 10px;
   border-radius: 5px;
   cursor: pointer;
-  margin-top: 10px;
   width: 100%;
   &:hover {
     background-color: #5a54d1;
@@ -109,17 +101,15 @@ const GeneratePersonaModal: React.FC<ModalProps> = ({
 }) => {
   const [name, setName] = useState("");
   const [role, setRole] = useState("");
-  const [file, setFile] = useState<File | null>(null);
   const [randomAvatar, setRandomAvatar] = useState<AvatarType>(
     generateRandomAvatar()
   );
 
   const handleCreate = async () => {
-    if (name && role && file) {
+    if (name && role) {
       setName("");
       setRole("");
-      setFile(null);
-      await onCreate(name, role, randomAvatar, file);
+      await onCreate(name, role, randomAvatar);
       onClose();
     }
   };
@@ -127,7 +117,6 @@ const GeneratePersonaModal: React.FC<ModalProps> = ({
   const handleClose = () => {
     setName("");
     setRole("");
-    setFile(null);
     onClose();
   };
   return (
@@ -171,18 +160,15 @@ const GeneratePersonaModal: React.FC<ModalProps> = ({
             />
           </PersonaInfo>
         </PersonaInfoContainer>
-        <FileInput
-          type="file"
-          accept="application/pdf"
-          onChange={(e) => setFile(e.target.files ? e.target.files[0] : null)}
-        />
-        {
-          name && role && file ?
-          <ConfirmButton onClick={handleCreate}>Create</ConfirmButton>
-          :
-          <CloseButton disabled>Create</CloseButton>
-        }
-        <CloseButton onClick={handleClose}>Close</CloseButton>
+        <FHFlex>
+          {
+            name && role ?
+            <ConfirmButton onClick={handleCreate}>Create</ConfirmButton>
+            :
+            <CloseButton disabled>Create</CloseButton>
+          }
+          <CloseButton onClick={handleClose}>Close</CloseButton>
+        </FHFlex>
       </ModalContent>
     </ModalContainer>
   );

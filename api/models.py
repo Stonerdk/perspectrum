@@ -43,3 +43,8 @@ class AddMessage(BaseModel):
 
 class MessageBody(BaseModel):
     message: str
+
+class PersonaBody(BaseModel):
+    name: str
+    role: str
+    avatar: AvatarType

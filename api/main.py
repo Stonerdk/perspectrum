@@ -1,7 +1,7 @@
 # main.py (계속)
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, Body
-from models import Persona, AvatarType, ChatRoom, ChatRoomHeader, ChatMessage, AddMessage, MessageBody
+from models import Persona, AvatarType, ChatRoom, ChatRoomHeader, ChatMessage, AddMessage, MessageBody, PersonaBody
 from data import personas, chatrooms
 from typing import List, Dict
 
@@ -134,15 +134,7 @@ async def api_recommend_participants(id: str, body: MessageBody):
         recommended_personas = await recommend_participants(chatroom, body.message)
         return {"participants": recommended_personas}
     raise HTTPException(status_code=404, detail="Chat room not found")
-# deprecated
-# @app.post("/personas", response_model=Persona)
-# async def api_add_persona(name: str, role: str, avatar: AvatarType):
-#     new_persona = Persona(
-#         id=str(len(personas) + 1),
-#         name=name,
-#         role=role,
-#         avatar=avatar,
-#         color="#fff",
-#     )
-#     personas.append(new_persona)
-#     return new_persona
+
+@app.post("/personas", response_model=Persona)
+async def api_add_persona(body: PersonaBody):
+    return await add_persona(body.name, body.role, body.avatar)

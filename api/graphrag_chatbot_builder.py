@@ -7,7 +7,10 @@ from text_util import *
 import numpy as np
 import networkx as nx
 from dotenv import load_dotenv
+from tqdm import tqdm
+import pickle
 
+batch_size = 32
 def build_graphs(topics, embedding_model):
     persona_graphs = {}
     base_dir = "./new2"
@@ -23,10 +26,14 @@ def build_graphs(topics, embedding_model):
         for i, doc in enumerate(documents):
             graph.add_node(i, content=doc.page_content, metadata=doc.metadata)
         print("embedding", topic)
-        embeddings = [
-            embedding_model.embed_query(doc.page_content) for doc in documents
-        ]
+        texts = [doc.page_content for doc in documents]
+        embeddings = []
+        for i in tqdm(range(0, len(texts), batch_size), desc="Embedding batches"):
+            batch_texts = texts[i:i + batch_size]
+            batch_embeddings = embedding_model.embed_documents(batch_texts)
+            embeddings.extend(batch_embeddings)
         norms = [np.linalg.norm(embedding) for embedding in embeddings]
+
         print("construct graph", topic)
         for i in range(len(documents)):
             for j in range(i + 1, len(documents)):
@@ -37,14 +44,13 @@ def build_graphs(topics, embedding_model):
                     graph.add_edge(i, j, weight=similarity)
 
         persona_graphs[topic] = graph
-        return persona_graphs
+    return persona_graphs
 
-if __name__ == "__main__":
-    load_dotenv()
-    openai_api_key = os.getenv("OPENAI_API_KEY")
-    embedding_model = OpenAIEmbeddings(openai_api_key=openai_api_key)
-    topics = ['economics', 'science', 'law', 'social', 'environment', 'education', 'politics', 'culture']
+load_dotenv()
+openai_api_key = os.getenv("OPENAI_API_KEY")
+embedding_model = OpenAIEmbeddings(openai_api_key=openai_api_key)
+topics = ['economics', 'science', 'law', 'social', 'environment', 'education', 'politics', 'culture']
 
-    persona_graphs = build_graphs(topics, embedding_model)
-    for topic in topics:
-        persona_graphs[topic].save_local(f'./graphrag/{topic}')
+graphs = build_graphs(topics, embedding_model)
+with open(f"./graphrag/graphs.pkl", "wb") as f:
+    pickle.dump(graphs, f)

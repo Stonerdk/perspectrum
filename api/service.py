@@ -6,6 +6,7 @@ import asyncio
 import random
 from ws import manager
 from graphrag_chatbot import bot
+import traceback
 
 active_dialogues = {}
 
@@ -22,6 +23,10 @@ async def get_id_by_role(role: str):
     return next((p.id for p in personas if p.role == role), None)
 
 
+async def get_role_by_id(id: str):
+    return next((p.role for p in personas if p.id == id), None)
+
+
 def get_persona_by_role(role: str):
     return next((p for p in personas if p.role == role), None)
 
@@ -32,6 +37,12 @@ async def get_chatrooms():
 
 async def get_chatroom_by_id(id: str):
     return next((c for c in chatrooms if c.id == id), None)
+
+
+async def add_persona(name: str, role: str, avatar: str):
+    new_persona = Persona(id=str(len(personas) + 1), name=name, role=role, color="#fff", avatar=avatar)
+    personas.append(new_persona)
+    return new_persona
 
 
 async def add_chatroom():
@@ -73,15 +84,18 @@ async def retrieve(chatroom: ChatRoom):
     if chatroom.id in active_dialogues:
         return False
 
+
     async def handle_persona(persona):
         try:
+            role = await get_role_by_id(persona)
             placeholder_message = await send_message(chatroom, persona, "...")
-            response = await bot.retrieve(persona)
+            response = await bot.retrieve(role)
             placeholder_message.message = response if response else "I don't have an answer for that."
             await manager.send_message(chatroom.id, placeholder_message.model_dump())
         except asyncio.CancelledError:
             await manager.send_system(chatroom.id, "cancel")
         except Exception as e:
+            traceback.print_exc()
             await manager.send_system(chatroom.id, "error", str(e))
 
     async def run():
