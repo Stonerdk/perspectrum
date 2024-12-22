@@ -1,7 +1,6 @@
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
 from langchain.schema import HumanMessage
-from jinja2 import Template
 
 
 class Prompt:
