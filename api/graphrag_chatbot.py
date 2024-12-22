@@ -72,7 +72,7 @@ class GraphRAGChatbot:
         self.dialogue_history = []
         if persona in self.persona_graphs:
             graph = self.persona_graphs[persona]
-            relevant_nodes = self.retrieve_relevant_nodes(graph, self.prev_question)
+            relevant_nodes = await self.retrieve_relevant_nodes(graph, self.prev_question)
             self.persona_contexts[persona] = "\n\n".join(
                 [graph.nodes[node]["content"] for node in relevant_nodes]
             )
@@ -124,6 +124,13 @@ class GraphRAGChatbot:
             await self.reset()
         return response
 
+    async def summary(self):
+        chain = self.prompt.query_summary_chain(self.chat_model)
+        full_dialogue_text = "\n".join([f"{speaker.capitalize()}: {utterance}" for speaker, utterance in self.dialogue_history])
+        response = await chain.arun(dialogue_history=full_dialogue_text)
+        print(response)
+        return response
+
     async def reset(self):
         self.turns = 0
         self.dialogue_history = []
@@ -134,7 +141,7 @@ class GraphRAGChatbot:
         return self.dialogue_history != []
 
 
-    def retrieve_relevant_nodes(self, graph, query):
+    async def retrieve_relevant_nodes(self, graph, query):
         """Retrieve nodes from the graph that are most relevant to the query."""
         query_embedding = self.embedding_model.embed_query(query)
         query_norm = max(1e-10, np.linalg.norm(query_embedding))

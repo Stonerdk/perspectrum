@@ -134,6 +134,19 @@ async def debate(chatroom: ChatRoom):
     return True
 
 
+async def summary(chatroom: ChatRoom):
+    if chatroom.id in active_dialogues:
+        return False
+
+    placeholder_message = await send_message(chatroom, "0", "...")
+    response = await bot.summary()
+    placeholder_message.message = response if response else "I don't have an answer for that."
+    await manager.send_message(chatroom.id, placeholder_message.model_dump())
+    # active_dialogues.pop(chatroom.id, None)
+    # active_dialogues[chatroom.id].cancel()
+    return True
+
+
 async def cancel_debate(chatroom: ChatRoom):
     if chatroom.id not in active_dialogues:
         return False

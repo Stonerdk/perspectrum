@@ -26,21 +26,29 @@ class Prompt:
         self.query_debate = PromptTemplate(
             input_variables=["persona", "dialogue_history", "question", "context"],
             template=(
-            "As a {persona}, continue the following debate based on the previous dialogue.\n\n"
-            "Context:{context}\n\n"
-            "Dialogue history:\n{dialogue_history}\n"
-            "Question: {question}\n. Answer within 3 sentences."
-            "{persona}, your response:"
+                "As a {persona}, continue the following debate based on the previous dialogue.\n\n"
+                "Context:{context}\n\n"
+                "Dialogue history:\n{dialogue_history}\n"
+                "Question: {question}\n. Answer within 3 sentences."
+                "{persona}, your response:"
             ),
         )
         self.query_custom_debate = PromptTemplate(
             input_variables=["persona", "dialogue_history", "question", "context"],
             template=(
-            "As a {persona}, continue the following debate based on the previous dialogue.\n\n"
-            "Dialogue history:\n{dialogue_history}\n"
-            "Question: {question}\n. Answer within 3 sentences."
-            "{persona}, your response:"
+                "As a {persona}, continue the following debate based on the previous dialogue.\n\n"
+                "Dialogue history:\n{dialogue_history}\n"
+                "Question: {question}\n. Answer within 3 sentences."
+                "{persona}, your response:"
             ),
+        )
+        self.query_summary = PromptTemplate(
+            input_variables=["dialogue_history"],
+            template=(
+                "Summarize the following debate in each persona perspective:\n\n"
+                "{dialogue_history}\n\n"
+                "Summary:"
+            )
         )
 
 
@@ -56,6 +64,8 @@ class Prompt:
     def query_debate_persona_chain(self, model):
         return LLMChain(llm=model, prompt=self.query_custom_debate)
 
+    def query_summary_chain(self, model):
+        return LLMChain(llm=model, prompt=self.query_summary)
 
     def recommend_topics(self, query):
         prompt = (

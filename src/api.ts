@@ -60,6 +60,11 @@ export const debateChat = async (roomId: string): Promise<void> => {
     await axios.post(fetchUrl(`chatrooms/${roomId}/debate`), {});
 }
 
+export const summaryChat = async (roomId: string): Promise<void> => {
+    await axios.post(fetchUrl(`chatrooms/${roomId}/summary`));
+}
+
+
 export const cancelChat = async (roomId: string) => {
     await axios.post(fetchUrl(`chatrooms/${roomId}/cancel`));
 }

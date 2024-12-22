@@ -392,7 +392,7 @@ export const GenerateButton = styled.button`
   }
 `;
 
-export const GoDeeperButton = styled.button`
+export const SummarizeButton = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;

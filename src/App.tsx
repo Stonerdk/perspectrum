@@ -20,6 +20,7 @@ import {
   debateChat,
   resetChat,
   sendChat,
+  summaryChat
 } from "./api";
 import {
   AppContainer,
@@ -49,6 +50,7 @@ import {
   PersonaWrapper,
   RightSidebarBody,
   SendButton,
+  SummarizeButton,
   Sidebar,
   ToggleButton,
 } from "./Components";
@@ -216,6 +218,22 @@ const App: React.FC = () => {
       setGenerating(false);
     }
   };
+
+  const summarizeMessage = async () => {
+    if (!currentChatRoom) {
+      setGenerating(false);
+      return;
+    }
+    setShowContinue(false);
+    setGenerating(true);
+    try {
+      await summaryChat(currentChatRoom!.id);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setGenerating(false);
+    }
+  }
 
   const cancelMessage = async () => {
     if (currentChatRoom) {
@@ -493,7 +511,7 @@ const App: React.FC = () => {
                             </>
                           )}
                           <MessageText $ismine={isMine}>
-                            {message.message === "..." && !isMine ? (
+                            {message.message === "..." ? (
                               <ClipLoader
                                 color="#fff"
                                 loading={true}
@@ -523,6 +541,9 @@ const App: React.FC = () => {
                         &nbsp;&nbsp;
                         <strong>Go Deeper!</strong>
                       </GenerateButton>
+                      <SummarizeButton onClick={summarizeMessage}>
+                        Summarize
+                      </SummarizeButton>
                       <CancelButton onClick={resetMessage}>Cancel</CancelButton>
                     </ContinueButtonWrapper>
                   )}
